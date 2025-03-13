@@ -7,4 +7,14 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <Folder Include="Data\Repositories\" />
+      <Folder Include="Network\" />
+      <Folder Include="Protocol\" />
+      <Folder Include="Server\" />
+      <Folder Include="Services\" />
+      <Folder Include="Session\" />
+      <Folder Include="State\" />
+    </ItemGroup>
+
 </Project>
