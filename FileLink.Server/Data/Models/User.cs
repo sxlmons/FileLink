@@ -35,11 +35,8 @@ public class User
         UpdatedAt = CreatedAt;
     }
 
-    /// <summary>
-    /// Initializes a new instance of the User class with the specified username and email.
-    /// </summary>
-    /// <param name="username">The username for the user</param>
-    /// <param name="email">The email address of the user</param>
+ 
+    // Initializes a new instance of the User class with the specified username and email.
     public User(string username, string email) : this()
     {
         Username = username;

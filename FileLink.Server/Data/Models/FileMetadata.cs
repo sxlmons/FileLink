@@ -37,12 +37,8 @@ namespace FileLink.Server.Data.Models;
             CreatedAt = DateTime.UtcNow;
             UpdatedAt = CreatedAt;
         }
-
-        /// <summary>
-        /// Initializes a new instance of the FileMetadata class with the specified user ID and file name.
-        /// </summary>
-        /// <param name="userId">The user ID of the file owner</param>
-        /// <param name="fileName">The original name of the file</param>
+        
+        // Initializes a new instance of the FileMetadata class with the specified user ID and file name.
         public FileMetadata(string userId, string fileName) : this()
         {
             UserId = userId;
