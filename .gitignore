@@ -1,6 +1,4 @@
 .idea
-*.sln
-*.sln
 # Compiled binaries
 bin/
 obj/
@@ -39,7 +37,6 @@ obj/
 
 # Rider/JetBrains-specific files
 .idea/
-*.sln.iml
 
 # macOS system files
 .DS_Store
@@ -95,5 +92,6 @@ obj/
 .vscode/
 .idea/
 Thumbs.db
-desktop.ini
+desktoAAp.ini
+
 
