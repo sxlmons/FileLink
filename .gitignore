@@ -1,1 +1,97 @@
 .idea
+# Compiled binaries
+bin/
+obj/
+
+# Visual Studio user-specific settings
+.vs/
+.vscode/
+
+# Build-related files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Logs and database files
+*.log
+*.tlog
+*.pdb
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# .NET-specific files
+*.dll
+*.exe
+*.exe.config
+*.mdb
+*.ilk
+*.ipch
+*.pch
+*.obj
+*.idb
+*.sbr
+
+# Rider/JetBrains-specific files
+.idea/
+
+# macOS system files
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows-specific files
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Node/NPM (if using with MAUI Blazor)
+node_modules/
+npm-debug.log
+
+# .NET MAUI platform-specific files
+Platforms/iOS/*.xcodeproj/
+Platforms/iOS/*.xcworkspace/
+Platforms/iOS/*.pbxproj
+Platforms/iOS/Pods/
+Platforms/iOS/Podfile.lock
+
+# Android platform-specific files
+Platforms/Android/bin/
+Platforms/Android/obj/
+Platforms/Android/*.apk
+Platforms/Android/*.aab
+Platforms/Android/*.keystore
+
+# Xamarin remnants (if upgrading from Xamarin.Forms)
+*.apk
+*.aab
+*.app
+*.ipa
+*.xcodeproj/
+*.xcworkspace/
+Pods/
+Podfile.lock
+*.xcuserstate
+bin/
+obj/
+*.dll
+*.pdb
+*.apk
+*.app
+*.exe
+*.log
+*.sqlite
+*.sqlite3
+.DS_Store
+.vs/
+.vscode/
+.idea/
+Thumbs.db
+desktoAAp.ini
+
+
