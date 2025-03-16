@@ -9,8 +9,6 @@
 
     <ItemGroup>
       <Folder Include="Data\Repositories\" />
-      <Folder Include="Network\" />
-      <Folder Include="Server\" />
       <Folder Include="Session\" />
       <Folder Include="State\" />
     </ItemGroup>

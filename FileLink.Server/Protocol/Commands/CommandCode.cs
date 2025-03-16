@@ -1,6 +1,6 @@
 namespace FileLink.Server.Protocol.Commands;
 
-// UNDER CONSTRUCTION,
+// UNDER CONSTRUCTION, IGNORE THIS FOR NOW
 // Contains constants for all valid command codes used in the protocol.
 // These codes are sent in packets to indicate the type of request or response.
 public static class CommandCode
