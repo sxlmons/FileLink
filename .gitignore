@@ -372,3 +372,5 @@ FodyWeavers.xsd
 .gradle/
 .idea/
 local.properties
+FileLink.Shared/obj/Debug/net9.0/FileLink.Shared.csproj.FileListAbsolute.txt
+FileLink.Server/obj/Debug/net9.0/FileLink.Server.csproj.FileListAbsolute.txt

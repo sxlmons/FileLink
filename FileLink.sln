@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileLink.Shared", "FileLink
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileLink.Server", "FileLink.Server\FileLink.Server.csproj", "{055232DC-EDFB-43B4-B511-2C852A88EA12}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileLink.Client", "FileLink.Client\FileLink.Client.csproj", "{6EEF30C5-F4D0-4363-A623-5AA957356341}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{055232DC-EDFB-43B4-B511-2C852A88EA12}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{055232DC-EDFB-43B4-B511-2C852A88EA12}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{055232DC-EDFB-43B4-B511-2C852A88EA12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6EEF30C5-F4D0-4363-A623-5AA957356341}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6EEF30C5-F4D0-4363-A623-5AA957356341}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6EEF30C5-F4D0-4363-A623-5AA957356341}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6EEF30C5-F4D0-4363-A623-5AA957356341}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
