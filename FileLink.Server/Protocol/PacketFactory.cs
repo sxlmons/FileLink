@@ -3,6 +3,7 @@ using System.Text.Json;
 namespace FileLink.Server.Protocol;
 
 // Factory for producing packets yo
+// These methods will be used by the CommandHandler classes
 public class PacketFactory
 {
     // - Account Creation Packet Request/Response

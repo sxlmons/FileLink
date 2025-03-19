@@ -5,7 +5,7 @@ namespace FileLink.Server.Protocol;
 // These codes are sent in packets to indicate the type of request or response.
 public static class CommandCode
 {
-    // Auth Commands
+    // Auth Commands (100-199)
     public const int LOGIN_REQUEST = 100;
     public const int LOGIN_RESPONSE = 101;
     public const int LOGOUT_REQUEST = 102;
@@ -13,11 +13,12 @@ public static class CommandCode
     public const int CREATE_ACCOUNT_REQUEST = 110;
     public const int CREATE_ACCOUNT_RESPONSE = 111;
     
-    // File list commands
+    // File Commands (200-299)
+    // File list commands 
     public const int FILE_LIST_REQUEST = 200;
     public const int FILE_LIST_RESPONSE = 201;
     
-    // File upload commands
+    // File upload commands 
     public const int FILE_UPLOAD_INIT_REQUEST = 210;
     public const int FILE_UPLOAD_INIT_RESPONSE = 211;
     public const int FILE_UPLOAD_CHUNK_REQUEST = 212;
@@ -37,7 +38,7 @@ public static class CommandCode
     public const int FILE_DELETE_REQUEST = 230;
     public const int FILE_DELETE_RESPONSE = 231;
     
-    // Status responses
+    // Status responses (300-399)
     public const int SUCCESS = 300;
     public const int ERROR = 301;
     public const int UNAUTHORIZED = 302;

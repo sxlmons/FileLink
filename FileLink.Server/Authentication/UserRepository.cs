@@ -1,4 +1,4 @@
-namespace FileLink.Server.Data.Models;
+namespace FileLink.Server.Authentication;
 
 public class UserRepository
 {

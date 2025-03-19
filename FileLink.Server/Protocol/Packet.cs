@@ -6,16 +6,9 @@ namespace FileLink.Server.Protocol;
 // TO DO: Add AES encryption (Stephan)
 public class Packet
 {
-    // Gets or sets the command code that identifies the purpose of this packet.
     public int CommandCode { get; set; }
-    
-    // Unique ID for packet
     public Guid PacketId { get; set; }
-    
-    // User ID associated with this packet
     public string UserId  { get; set; } = string.Empty;
-    
-    // Timestamp for when the packet was created
     public DateTime Timestamp { get; set; }
     
     // Gets/Sets the metadata dictionary for the packet

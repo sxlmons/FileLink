@@ -3,11 +3,11 @@ using FileLink.Server.Services.Logging;
 namespace FileLink.Server.Network;
 
 // Manages all active connections.
-public class ConnectionManager
+public class ClientSessionManager
 {
     private readonly ILogger _logger;
     
-    // Initialize instance of ConnectionManager
+    // Initialize instance of ClientSessionManager
     
     // Method to get number of active connections
     
