@@ -41,6 +41,31 @@ public class FileLogger : ILogger
             }
         }    
     }
+    
+    public void Log(LogLevel level, string message, Exception exception)
+    {
+        string logEntry = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [{level}] {message}";
+        string exceptionDetails = $"Exception: {exception.GetType().Name}: {exception.Message}\nStackTrace: {exception.StackTrace}";
+            
+        lock (_lockObj)
+        {
+            try
+            {
+                File.AppendAllText(_logFilePath, logEntry + Environment.NewLine + exceptionDetails + Environment.NewLine);
+                    
+                // Also print to console for debugging purposes
+                Console.WriteLine(logEntry);
+                Console.WriteLine(exceptionDetails);
+            }
+            catch (Exception ex)
+            {
+                // If we can't log to file, at least try to output to console
+                Console.WriteLine($"Error logging to file: {ex.Message}");
+                Console.WriteLine(logEntry);
+                Console.WriteLine(exceptionDetails);
+            }
+        }
+    }
 
     public void LogException(LogLevel level, string message, Exception exception)
     {
@@ -77,8 +102,5 @@ public class FileLogger : ILogger
     
     public void Fatal(string message) => Log(LogLevel.Fatal, message);
     
-    public void FatalException(string message, Exception exception)
-    {
-        throw new NotImplementedException();
-    }
+    public void Fatal(string message, Exception exception) => Log(LogLevel.Fatal, message, exception);
 }

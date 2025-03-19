@@ -15,7 +15,7 @@ public interface ILogger
 {
     void Log(LogLevel level, string message);
     
-    void LogException(LogLevel level, string message, Exception exception);
+    void Log(LogLevel level, string message, Exception exception);
     
     void Debug(string message);
     
@@ -27,5 +27,5 @@ public interface ILogger
     
     void Fatal(string message);
     
-    void FatalException(string message, Exception exception);
+    void Fatal(string message, Exception exception);
 }
