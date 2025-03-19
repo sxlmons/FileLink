@@ -1,30 +1,16 @@
-namespace FileLink.Server.Data.Models;
+namespace FileLink.Server.Authentication;
 
 // Represents a user in our cloud service
 public class User
 {
-    // Unique ID for the user.
     public string Id { get; set; }
-    
-    // Username assigned to the user.
     public string Username { get; set; }
-    
-    // Email address for the user.
     public string Email { get; set; }
-    
-    // The password hash of the user
     public string PasswordHash { get; set; }
-    
-    // The salt used to hash the password.
-    public string PasswordSalt { get; set; }
-    
-    // Timestamp of when the file was created.
+    public byte[] PasswordSalt { get; set; }
+    public string Role { get; set; }
     public DateTime CreatedAt { get; set; }
-        
-    // Timestamp of when the file was last updated.
     public DateTime UpdatedAt { get; set; }
-        
-    // Timestamp of when the file was last accessed.
     public DateTime? LastLoginAt { get; set; }
     
     // Initializes a new instance of the User class
@@ -32,15 +18,21 @@ public class User
     {
         Id = Guid.NewGuid().ToString();
         CreatedAt = DateTime.UtcNow;
-        UpdatedAt = CreatedAt;
+        Role = "User"; // Default role
     }
 
  
     // Initializes a new instance of the User class with the specified username and email.
-    public User(string username, string email) : this()
+    public User(string username, string email, string role) : this()
     {
         Username = username;
         Email = email;
+        Role = role;
     }
-    
+
+    // Updates the user's last login time
+    public void UpdateLastLogin()
+    {
+        LastLoginAt = DateTime.UtcNow;
+    }
 }

@@ -3,31 +3,22 @@ namespace FileLink.Server.Data.Models;
     // Represents metadata for a file stored in our server
     public class FileMetadata
     {
-        // Unique ID for the file.
+        // General info
         public string Id { get; set; }
-        
-        // The user ID of the file owner.
         public string UserId { get; set; }
-        
-        // Original name of the file.
         public string FileName { get; set; }
-        
-        // The size of the file in bytes.
         public long FileSize { get; set; }
-        
-        // The type of file
         public string ContentType { get; set; }
+        public string FilePath { get; set; }
+        public bool IsComplete { get; set; }
+        public int ChunksReceived { get; set; }
+        public int TotalChunks { get; set; }
         
-        // The path where the file is stored on the server.
-        public string StoragePath { get; set; }
-        
-        // Timestamp of when the file was created.
+        // Timestamps
         public DateTime CreatedAt { get; set; }
-        
-        // Timestamp of when the file was last updated.
         public DateTime UpdatedAt { get; set; }
         
-        // Timestamp of when the file was last accessed.
+        // Maybe:
         public DateTime? LastAccessedAt { get; set; }
         
         // Initializes a new instance of the FileMetadata class.
@@ -35,25 +26,38 @@ namespace FileLink.Server.Data.Models;
         {
             Id = Guid.NewGuid().ToString();
             CreatedAt = DateTime.UtcNow;
-            UpdatedAt = CreatedAt;
+            UpdatedAt = DateTime.UtcNow;
+            IsComplete = false;
+            ChunksReceived = 0;
         }
         
         // Initializes a new instance of the FileMetadata class with the specified user ID and file name.
-        public FileMetadata(string userId, string fileName) : this()
+        public FileMetadata(string userId, string fileName, long fileSize, string contentType, string filePath) : this()
         {
             UserId = userId;
             FileName = fileName;
+            FileSize = fileSize;
+            ContentType = contentType;
+            FilePath = filePath;
         }
         
-        // Gets the file extension
-        public string GetFileExtension()
+        // Updates the metadata to mark a chunk as received 
+        public void AddChunk()
         {
-            return Path.GetExtension(FileName);
+            ChunksReceived++;
+            UpdatedAt = DateTime.UtcNow;
+            
+            // Check if all chunks have been received
+            if (ChunksReceived >= TotalChunks)
+            {
+                IsComplete = true;
+            }
         }
-        
-        // Get the file name without the extension
-        public string GetFileNameWithoutExtension()
+
+        // Marks the file as complete
+        public void MarkComplete()
         {
-            return Path.GetFileNameWithoutExtension(FileName);
+            IsComplete = true;
+            UpdatedAt = DateTime.UtcNow;
         }
     }

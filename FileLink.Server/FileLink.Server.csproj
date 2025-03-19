@@ -8,9 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Data\Repositories\" />
-      <Folder Include="Session\" />
-      <Folder Include="State\" />
+      <Folder Include="SessionState\" />
     </ItemGroup>
 
 </Project>
