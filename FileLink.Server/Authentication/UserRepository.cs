@@ -7,7 +7,7 @@ namespace FileLink.Server.Authentication
 {
     // Repository for user data storage 
     // Implements the repository pattern 
-    public class UserRepository
+    public class UserRepository : IUserRepository
     {
         private readonly string _usersPath;
         private readonly object _lock = new object();
