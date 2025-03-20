@@ -94,13 +94,112 @@ public class FileService
     // Processes a file chunk, the second step in the file upload process
     public async Task<bool> ProcessFileChunk(string fileId, int chunkIndex, bool isLastChunk, byte[] chunkData)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrEmpty(fileId))
+            throw new ArgumentException("File ID cannot be empty.", nameof(fileId));
+            
+        if (chunkIndex < 0)
+            throw new ArgumentException("Chunk index must be non-negative.", nameof(chunkIndex));
+            
+        if (chunkData == null || chunkData.Length == 0)
+            throw new ArgumentException("Chunk data cannot be empty.", nameof(chunkData));
+        try
+        {
+            // Get the file metadata 
+            var metadata = await _fileRepository.GetFileMetadataById(fileId);
+
+            if (metadata == null)
+            {
+                _logService.Warning($"File {fileId} does not exist.");
+                return false;
+            }
+            
+            // Validate chunk index
+            if (chunkIndex != metadata.ChunksReceived)
+            {
+                _logService.Warning($"Received out-of-order chunk {chunkIndex} for file {fileId}, expected: {metadata.ChunksReceived}.");
+                return false;
+            }
+            
+            // Check if the file already exists 
+            if (!File.Exists(metadata.FilePath))
+            {
+                _logService.Warning($"File {fileId} does not exist at path {metadata.FilePath}.");
+            }
+            
+            // Calculate the offset in the file
+            long offset = (long)chunkIndex * ChunkSize;
+            
+            // Write the chunk to the file
+            await using (var fileStream = new FileStream(metadata.FilePath, FileMode.Open, FileAccess.Write, FileShare.None))
+            {
+                fileStream.Seek(offset, SeekOrigin.Begin);
+                await fileStream.WriteAsync(chunkData, 0, chunkData.Length);
+            }
+            
+            // Update the metadata
+            metadata.AddChunk();
+            
+            // If this is the last chunk, mark the file as complete
+            if (isLastChunk)
+                metadata.MarkComplete();
+            
+            // Update the metadata in the repository
+            await _fileRepository.UpdateFileMetadataAsync(metadata);
+            _logService.Debug($"Processed chunk {chunkIndex} for file {fileId} (Size: {chunkData.Length}).");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logService.Error($"Error while processing file {fileId}. {ex.Message}", ex);
+            return false;
+        }
     }
     
     // Finalizes a file upload
     public async Task<bool> FinalizeFileUpload(string fileId)
     {
-        throw new NotImplementedException();
+        if  (string.IsNullOrEmpty(fileId))
+            throw new ArgumentException("File ID cannot be empty.", nameof(fileId));
+        try
+        {
+            // Get the file metadata
+            var metadata = await _fileRepository.GetFileMetadataById(fileId);
+
+            if (metadata == null)
+            {
+                _logService.Warning($"File {fileId} does not exist.");
+                return false;
+            }
+            
+            // Check if all chunks have been received 
+            if (metadata.ChunksReceived < metadata.TotalChunks)
+            {
+                _logService.Warning($"Attempted to finalize incomplete upload: {fileId}, (Received: {metadata.ChunksReceived}, Totals)");
+            }
+            
+            // Mark complete
+            metadata.MarkComplete();
+            
+            // Update the metadata in the repository
+            await _fileRepository.UpdateFileMetadataAsync(metadata);
+
+            // Verify the file size
+            var fileInfo = new FileInfo(metadata.FilePath);
+            
+            if (fileInfo.Length != metadata.FileSize)
+            {
+                _logService.Warning($"File {fileId} does not have the expected size of {metadata.FileSize}, Actual {fileInfo.Length}");
+                // this is still a success but log the discrepancy
+            }
+            
+            _logService.Debug($"Finalized file {metadata.FileName} (ID: {fileId}, Size: {fileInfo.Length} Bytes).");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logService.Error($"Error while finalizing file {ex.Message}.", ex);
+            return false;
+        }
     }
     
     // initialize file download
