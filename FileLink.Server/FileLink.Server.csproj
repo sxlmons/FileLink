@@ -7,10 +7,4 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <ItemGroup>
-      <Folder Include="Data\Repositories\" />
-      <Folder Include="Session\" />
-      <Folder Include="State\" />
-    </ItemGroup>
-
 </Project>

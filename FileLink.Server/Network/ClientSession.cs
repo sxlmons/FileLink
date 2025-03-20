@@ -5,7 +5,7 @@ namespace FileLink.Server.Network;
 
 // Represents connection to a single client.
 // Handles socket logic/communication.
-public class ClientConnection
+public class ClientSession
 {
     // Unique ID for Client Connection.
     public Guid Id { get; } 
@@ -23,8 +23,8 @@ public class ClientConnection
     private CancellationTokenSource _cancellationTokenSource;
     private bool _isConnected;
     
-    // Initializes instance of the ClientConnection class.
-    public ClientConnection(TcpClient tcpClient, ILogger logger)
+    // Initializes instance of the ClientSession class.
+    public ClientSession(TcpClient tcpClient, ILogger logger)
     {
         Id = Guid.NewGuid();
         _tcpClient = tcpClient;
