@@ -14,9 +14,9 @@ namespace FileLink.Server.Server
         public bool EnableDebugLogging { get; set; } = false;
         public bool LogPacketContents { get; set; } = false;
 
-        ServerConfiguration()
+        public ServerConfiguration()
         {
-            // intentionally left blank
+            
         }
 
         // Validates the configuration settings to ensure they are valid

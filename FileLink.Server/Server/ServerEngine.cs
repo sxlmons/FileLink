@@ -56,9 +56,13 @@ public class ServerEngine
             _fileService = new FileService(_fileRepository, Configuration.FileStoragePath, _logService, Configuration.ChunkSize);
             
             // Initialize client session management
-            
-            // Initialize state and command factories
-            
+            _clientSessionManager = new ClientSessionManager(_logService, Configuration);
+
+            /* Initialize state and command factories
+            sessionStateFactory
+            commandHandlerFactory
+            */
+
             // Initialize TCP server 
         }
         catch (Exception ex)
