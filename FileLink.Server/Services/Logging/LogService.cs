@@ -43,7 +43,7 @@ namespace FileLink.Server.Services.Logging
         public void LogPacket(Packet packet, bool isSending, Guid sessionId)
         {
             string direction = isSending ? "Sending" : "Receiving";
-            string commandName = CommandCode.GetCommandName(packet.CommandCode);
+            string commandName = Protocol.Commands.CommandCode.GetCommandName(packet.CommandCode);
             
             // Determine payload description
             string payloadDesc = packet.Payload == null || packet.Payload.Length == 0 ? "No Payload" : $"Payload Size: {packet.Payload.Length} Bytes";
