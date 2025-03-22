@@ -37,8 +37,8 @@ namespace FileLink.Server.SessionState
         public ISessionState CreateTransferState(ClientSession clientSession, FileMetadata fileMetadata, bool isUploading)
         {
             ArgumentNullException.ThrowIfNull(clientSession);
+            ArgumentNullException.ThrowIfNull(fileMetadata);
             return new TransferState(clientSession, _fileService, fileMetadata, isUploading, _logService);
-            return null;
         }
 
         public ISessionState CreateDisconnectingState(ClientSession clientSession)

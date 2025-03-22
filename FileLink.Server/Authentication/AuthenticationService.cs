@@ -56,7 +56,7 @@ namespace FileLink.Server.Authentication
         }
         
         // Registers a new user
-        public async Task<User> RegisterUser(string username, string password, string role, string email)
+        public async Task<User> RegisterUser(string username, string password, string role, string email = "")
         {
             try
             {

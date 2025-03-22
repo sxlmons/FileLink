@@ -49,7 +49,7 @@ public class ServerEngine
                 
             // Initialize authentication components
             _userRepository = new UserRepository(Configuration.UsersDataPath, _logService);
-            /* auth service */
+            _authService = new AuthenticationService(_userRepository, _logService);
             
             // Initialize file management components
             _fileRepository = new FileRepository(Configuration.FileMetadataPath, Configuration.FileStoragePath, _logService);
@@ -58,16 +58,26 @@ public class ServerEngine
             // Initialize client session management
             _clientSessionManager = new ClientSessionManager(_logService, Configuration);
 
-            /* Initialize state and command factories
-            sessionStateFactory
-            commandHandlerFactory
-            */
+            // Initialize state and command factories
+            _sessionStateFactory = new SessionStateFactory(_authService, _fileService, _logService);
+            _commandHandlerFactory = new CommandHandlerFactory(_authService, _fileService, _logService);
 
-            // Initialize TCP server 
+            // Initialize TCP server
+            _tcpServer = new TcpServer(
+                Configuration.Port,
+                _logService,
+                _clientSessionManager,
+                _commandHandlerFactory,
+                _sessionStateFactory,
+                Configuration);
+
+            _initialized = true;
+            _logService.Info("Cloud File Server initialized successfully");
         }
         catch (Exception ex)
         {
-            
+            _logService?.Fatal("Failed to initialize Cloud File Server", ex);
+            throw;
         }
         
     }
@@ -75,12 +85,47 @@ public class ServerEngine
     // Starts the server
     public async Task Start()
     {
-        
+        if (!_initialized)
+        {
+            throw new InvalidOperationException("Server must be initialized before starting.");
+        }
+
+        try
+        {
+            _logService.Info("Starting Cloud File Server...");
+            await _tcpServer.Start();
+        }
+        catch (Exception ex)
+        {
+            _logService.Fatal("Failed to start Cloud File Server", ex);
+            throw;
+        }
     }
     
     // Stops the server 
     public async Task Stop()
     {
-        
+        try
+        {
+            _logService.Info("Stopping Cloud File Server...");
+                
+            // Stop the server components in reverse order
+            if (_tcpServer != null)
+            {
+                await _tcpServer.Stop();
+            }
+                
+            if (_clientSessionManager != null)
+            {
+                await _clientSessionManager.DisconnectAllSessions("Server shutting down");
+            }
+                
+            _logService.Info("Cloud File Server stopped");
+        }
+        catch (Exception ex)
+        {
+            _logService.Error("Error stopping Cloud File Server", ex);
+            throw;
+        }
     }
 }
