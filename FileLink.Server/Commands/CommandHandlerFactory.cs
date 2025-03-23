@@ -28,7 +28,9 @@ namespace FileLink.Server.Commands
         private void RegisterDefaultHandlers()
         {
             // Authentication handlers
-            
+            RegisterHandler(new CreateAccountCommandHandler(_authService, _logService));
+            RegisterHandler(new LoginCommandHandler(_authService, _logService));
+            RegisterHandler(new LogoutCommandHandler(_authService, _logService));
             
             // File operation handlers
             RegisterHandler(new FileUploadCommandHandler(_fileService, _logService));

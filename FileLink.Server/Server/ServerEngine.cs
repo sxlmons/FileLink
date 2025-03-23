@@ -63,13 +63,7 @@ public class ServerEngine
             _commandHandlerFactory = new CommandHandlerFactory(_authService, _fileService, _logService);
 
             // Initialize TCP server
-            _tcpServer = new TcpServer(
-                Configuration.Port,
-                _logService,
-                _clientSessionManager,
-                _commandHandlerFactory,
-                _sessionStateFactory,
-                Configuration);
+            _tcpServer = new TcpServer(Configuration.Port, _logService, _clientSessionManager, _commandHandlerFactory, _sessionStateFactory, Configuration);
 
             _initialized = true;
             _logService.Info("Cloud File Server initialized successfully");
