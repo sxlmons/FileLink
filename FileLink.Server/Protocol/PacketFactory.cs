@@ -365,7 +365,17 @@ public class PacketFactory
     // Create a file download init request packet
     public Packet CreateFileDownloadInitRequest(string userId, string fileId)
     {
-        throw new NotImplementedException();
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.FILE_DOWNLOAD_INIT_REQUEST,
+            UserId = userId,
+            Metadata =
+            {
+                ["FileId"] = fileId
+            }
+        };
+
+        return packet;
     }
 
     // Create a file download init response packet
@@ -407,26 +417,82 @@ public class PacketFactory
     // Create a file download chunk request packet
     public Packet CreateFileDownloadChunkRequest(string userId, string fileId, int chunkIndex)
     {
-        throw new NotImplementedException();
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.FILE_DOWNLOAD_CHUNK_REQUEST,
+            UserId = userId,
+            Metadata =
+            {
+                ["FileId"] = fileId,
+                ["ChunkIndex"] = chunkIndex.ToString()
+            }
+        };
+
+        return packet;
     }
 
     // Create a file download chunk response packet
-    public Packet CreateFileDownloadChunkResponse(bool success, string fileId, int chunkIndex, bool isLastChunk,
-        byte[] data, string message, string userId)
+    public Packet CreateFileDownloadChunkResponse(bool success, string fileId, int chunkIndex, bool isLastChunk, byte[] data, string message, string userId)
     {
-        throw new NotImplementedException();
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.FILE_DOWNLOAD_CHUNK_RESPONSE,
+            UserId = userId,
+            Payload = data,
+            Metadata =
+            {
+                ["Success"] = success.ToString(),
+                ["FileId"] = fileId,
+                ["ChunkIndex"] = chunkIndex.ToString(),
+                ["IsLastChunk"] = isLastChunk.ToString(),
+                ["Message"] = message
+            }
+        };
+
+        return packet;
     }
 
     // Create a file download complete request packet
     public Packet CreateFileDownloadCompleteRequest(string userId, string fileId)
     {
-        throw new NotImplementedException();
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.FILE_DOWNLOAD_COMPLETE_REQUEST,
+            UserId = userId,
+            Metadata =
+            {
+                ["FileId"] = fileId
+            }
+        };
+
+        return packet;
     }
 
     // Create a file download complete response packet
     public Packet CreateFileDownloadCompleteResponse(bool success, string fileId, string message, string userId)
     {
-        throw new NotImplementedException();
+        var response = new
+        {
+            Success = success,
+            FileId = fileId,
+            Message = message
+        };
+
+        var payload = JsonSerializer.SerializeToUtf8Bytes(response);
+
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.FILE_DOWNLOAD_COMPLETE_RESPONSE,
+            UserId = userId,
+            Payload = payload,
+            Metadata =
+            {
+                ["Success"] = success.ToString(),
+                ["FileId"] = fileId
+            }
+        };
+
+        return packet;
     }
 
     // Create a file delete request packet
