@@ -15,6 +15,19 @@
 // inconsistencies in the communication protocol. Methods are organized by functionality
 // (authentication, file operations, etc.) and follow a consistent naming pattern.
 //-----------------------------------------------------------------------------
+//
+// General data flow patterns:
+//
+// For Request Packets:
+//   Client input → method params → payload object → serialized payload → packet → network
+//   Structure: packet = { CommandCode: REQUEST_TYPE, UserId: string, Payload: byte[], Metadata: {key-value pairs for quick access} }
+//
+// For Response Packets:
+//   Server input → method params → response object → serialized payload → packet → network
+//
+//   Structure: response = { Success: bool, Message: string, [Other data fields] }
+//              packet   = { CommandCode: RESPONSE_TYPE, UserId: string, Payload: byte[], Metadata: {"Success": bool, [Other metadata]} }
+//-----------------------------------------------------------------------------
 
 using System.Text.Json;
 
@@ -25,7 +38,7 @@ namespace FileLink.Server.Protocol;
 // These methods will be used by the CommandHandler classes
 public class PacketFactory
 {
-    // - Account Creation Packet Request/Response
+    // - Account Creation Packet Request/Response - Detailed protocol explanation provided
     // - Login Request/Response
     // - Logout Request/Response
     // - List Files Request/Response
@@ -44,19 +57,41 @@ public class PacketFactory
     // [CLIENT METHOD]: Creates an account creation request packet
     public Packet CreateAccountCreationRequest(string username, string password, string email)
     {
+        // Outline the credential information
         var accountInfo = new { username = username, password = password, email = email };
+        
+        // [Applied across all method payloads]
+        // Serialize the response object to a UTF-8 encoded byte array that will become the packet payload.
+        // This transforms our C# object into a binary format that can be transmitted over the network.
         var payload = JsonSerializer.SerializeToUtf8Bytes(accountInfo);
 
+        // [Applicable across all returned packets]
+        // Construct a new Packet object with the appropriate command code and payload.
+        // This packet will be transmitted to the Server for an account creation request.
         return new Packet
         {
+            // Sets the command code to indicate this is an account
             CommandCode = Commands.CommandCode.CREATE_ACCOUNT_REQUEST,
+            
+            // Attaches the serialized response data as the packet's payload
             Payload = payload
         };
     }
 
     // [SERVER METHOD] Creates an account creation response packet
+    // Data flow: 
+    // Input → params(success, message, userId) → response object → serialized payload → packet → network
+    //
+    // Structure:
+    // response = { Success: bool, Message: string, UserId: string }
+    // Payload = UTF8 serialized JSON of response
+    // Packet = { CommandCode: CREATE_ACCOUNT_RESPONSE, UserId: string, Payload: byte[], Metadata: {"Success": bool} }
+    //
     public Packet CreateAccountCreationResponse(bool success, string message, string userId = "")
     {
+        // [Applied across all responses]
+        // Create an anonymous object with the success flag and message to be serialized into the payload.
+        // This structured data will be deserialized by the client to understand the account creation result.
         var response = new
         {
             Success = success, 
@@ -64,8 +99,14 @@ public class PacketFactory
             UserId = userId
         };
         
+        // [Applicable across all returned packets]
+        // Construct a new Packet object with the appropriate command code and payload.
+        // This packet will be transmitted to the Server for an account creation request.
         var payload = JsonSerializer.SerializeToUtf8Bytes(response);
 
+        // [Applicable across all returned packets]
+        // Construct a new Packet object with the appropriate command code and payload.
+        // This packet will be transmitted to the Server for an account creation response.
         var packet = new Packet
         {
             CommandCode = Commands.CommandCode.CREATE_ACCOUNT_RESPONSE,
@@ -77,8 +118,9 @@ public class PacketFactory
             }
         };
 
+        // Return the fully constructed response packet ready to be sent to the client.
+        // This packet contains all necessary information about the account creation.
         return packet;
-
     }
 
     // [CLIENT] Create a login request packet
@@ -132,16 +174,12 @@ public class PacketFactory
     // [SERVER] Create logout response packet
     public Packet CreateLogoutResponse(bool success, string message)
     {
-        // Create an anonymous object with the success flag and message to be serialized into the payload.
-        // This structured data will be deserialized by the client to understand the logout result.
         var response = new
         {
             Success = success,
             Message = message
         };
         
-        // Serialize the response object to a UTF-8 encoded byte array that will become the packet payload.
-        // This transforms our C# object into a binary format that can be transmitted over the network.
         var payload = JsonSerializer.SerializeToUtf8Bytes(response);
 
         var packet = new Packet
@@ -160,13 +198,27 @@ public class PacketFactory
     // Create file list request packet
     public Packet CreateFileListRequest(string userId)
     {
-        throw new NotImplementedException();
+        return new Packet
+        {
+            CommandCode = Commands.CommandCode.FILE_LIST_REQUEST,
+            UserId = userId
+        };
     }
 
-    // Create file list response packet
+    // Creates a packet containing a list of files for responding to a file list request
+    // Takes a collection of file metadata objects to be sent to the client and the userId.
+    // returns a Packet object configured with FILE_LIST_RESPONSE command code,
+    // the user's ID, and a JSON-serialized payload containing file data
     public Packet CreateFileListResponse(IEnumerable<object> files, string userId)
     {
-        throw new NotImplementedException();
+        var payload = JsonSerializer.SerializeToUtf8Bytes(files);
+
+        return new Packet
+        {
+            CommandCode = Commands.CommandCode.FILE_LIST_RESPONSE,
+            UserId = userId,
+            Payload = payload
+        };
     }
 
     // Create a file upload initialization request packet
