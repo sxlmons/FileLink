@@ -65,13 +65,37 @@ public class PacketFactory
     // Create a login request packet
     public Packet CreateLoginRequest(string username, string password)
     {
-        throw new NotImplementedException();
+        var credentials = new { username = username, password = password };
+        var payload = JsonSerializer.SerializeToUtf8Bytes(credentials);
+
+        return new Packet
+        {
+            CommandCode = Commands.CommandCode.LOGIN_REQUEST,
+            Payload = payload
+        };
     }
 
     // Create a login response packet
     public Packet CreateLoginResponse(bool success, string message, string userId = "")
     {
-        throw new NotImplementedException();
+        var response = new
+        {
+            Success = success,
+            Message = message
+        };
+        
+        var payload = JsonSerializer.SerializeToUtf8Bytes(response);
+
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.LOGIN_RESPONSE,
+            UserId = userId,
+            Payload = payload,
+        };
+        
+        packet.Metadata["Success"] = success.ToString();
+        
+        return packet;
     }
 
     // Create logout request packet
