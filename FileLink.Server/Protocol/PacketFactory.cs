@@ -1,8 +1,27 @@
+//-----------------------------------------------------------------------------
+// Copyright (c) 2025 FileLink Project. All rights reserved.
+// Licensed under the MIT License.
+//-----------------------------------------------------------------------------
+//
+// PacketFactory.cs
+//
+// This factory provides a clean interface for creating properly formatted
+// packets throughout the FileLink application. It abstracts away the details of
+// packet construction, ensuring that all packets follow the same structure and
+// conventions regardless of where they're created in the codebase. Each method creates
+// a specific type of packet (request or response) with appropriate command codes,
+// serialized payloads, and metadata. This approach to packet creation
+// makes protocol changes easy, improves maintainability, and reduces the risk of
+// inconsistencies in the communication protocol. Methods are organized by functionality
+// (authentication, file operations, etc.) and follow a consistent naming pattern.
+//-----------------------------------------------------------------------------
+
 using System.Text.Json;
 
 namespace FileLink.Server.Protocol;
 
-// Factory for producing packets yo
+// Factory for creating packets with specific command codes and payloads.
+// Implements the Factory pattern to create different types of packets.
 // These methods will be used by the CommandHandler classes
 public class PacketFactory
 {
@@ -35,7 +54,7 @@ public class PacketFactory
         };
     }
 
-    // Creates an account creation response packet
+    // [SERVER METHOD] Creates an account creation response packet
     public Packet CreateAccountCreationResponse(bool success, string message, string userId = "")
     {
         var response = new
@@ -62,7 +81,7 @@ public class PacketFactory
 
     }
 
-    // Create a login request packet
+    // [CLIENT] Create a login request packet
     public Packet CreateLoginRequest(string username, string password)
     {
         var credentials = new { username = username, password = password };
@@ -75,7 +94,7 @@ public class PacketFactory
         };
     }
 
-    // Create a login response packet
+    // [SERVER] Create a login response packet
     public Packet CreateLoginResponse(bool success, string message, string userId = "")
     {
         var response = new
@@ -91,23 +110,51 @@ public class PacketFactory
             CommandCode = Commands.CommandCode.LOGIN_RESPONSE,
             UserId = userId,
             Payload = payload,
+            Metadata =
+            {
+                ["Success"] = success.ToString()
+            }
         };
-        
-        packet.Metadata["Success"] = success.ToString();
-        
+
         return packet;
     }
 
-    // Create logout request packet
+    // [CLIENT] Create logout request packet
     public Packet CreateLogoutRequest(string userId)
     {
-        throw new NotImplementedException();
+        return new Packet
+        {
+            CommandCode = Commands.CommandCode.LOGOUT_REQUEST,
+            UserId = userId
+        };
     }
 
-    // Create logout response packet
+    // [SERVER] Create logout response packet
     public Packet CreateLogoutResponse(bool success, string message)
     {
-        throw new NotImplementedException();
+        // Create an anonymous object with the success flag and message to be serialized into the payload.
+        // This structured data will be deserialized by the client to understand the logout result.
+        var response = new
+        {
+            Success = success,
+            Message = message
+        };
+        
+        // Serialize the response object to a UTF-8 encoded byte array that will become the packet payload.
+        // This transforms our C# object into a binary format that can be transmitted over the network.
+        var payload = JsonSerializer.SerializeToUtf8Bytes(response);
+
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.LOGOUT_RESPONSE,
+            Payload = payload,
+            Metadata =
+            {
+                ["Success"] = success.ToString()
+            }
+        };
+
+        return packet;
     }
 
     // Create file list request packet
