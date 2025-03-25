@@ -1,0 +1,2 @@
+namespace FileLink.Client.Connection;
+

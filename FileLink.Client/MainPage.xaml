@@ -3,13 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:clientPrototype="clr-namespace:"
              xmlns:client="clr-namespace:FileLink.Client"
-             x:Class="FileLink.Client.MainPage">
-
-    <ContentPage.BindingContext>
-        <ContentPage />
-    </ContentPage.BindingContext>
+             xmlns:fileselector="clr-namespace:FileLink.Client.FileOperations"
+             x:Class="FileLink.Client.MainPage"
+             x:DataType="client:MainViewModel">
+    
     <!-- 
-       We'll use a 3-column layout:
+       We're using a 3-column layout:
        - Column 0: Left navigation menu
        - Column 1: Main content (Search, Categories, Recent Files)
        - Column 2: Right-hand panel (Add New Files, Storage, Favourites)
@@ -253,7 +252,56 @@
                                FontSize="16"/>
                         <Button Text="Upload" 
                                 BackgroundColor="#4C3B8A" 
-                                TextColor="White"/>
+                                TextColor="White"
+                                Command="{Binding FileVM.AddFilesCommand}"/>
+                    </VerticalStackLayout>
+                    
+                </Frame>
+                
+                <Frame Padding="20" CornerRadius="10" BackgroundColor="White">
+                    <VerticalStackLayout Spacing="10">
+                            <Label Text="Queued Files" 
+                                   FontAttributes="Bold"
+                                   FontSize="16"
+                                   VerticalTextAlignment="Center"/>
+                            
+                        <CollectionView ItemsSource="{Binding FileVM.Files}">
+                            <!-- 
+                            This will show text saying that the user hasnt committed any files yet 
+                            Right now it glitches the UI so will come back to it 
+                            <CollectionView.EmptyView>
+                                <Label Text="No Files"></Label>
+                            </CollectionView.EmptyView>
+                            -->
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="{x:Type fileselector:FilesSelected}">
+                                    <Grid ColumnDefinitions="*, Auto">
+                                        
+                                            
+                                            <Label Text="{Binding fileName}" 
+                                                   VerticalOptions="Center"
+                                                   Grid.Column="0"/> 
+                                        
+                                            <Button Text="X"
+                                                    Style="{x:Null}"
+                                                    BackgroundColor="Transparent"
+                                                    TextColor="Black"
+                                                    BorderWidth="0"
+                                                    CornerRadius="0"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.FileVM.RemoveFilesCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Grid.Column="1"/>
+                                        
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                        <!-- Command="{Binding Function for sending files} -->
+                        <Button Text="Send Files"
+                                Command="{Binding FileVM.SendFilesCommand}"
+                                IsVisible="{Binding FileVM.IsButtonVisible}"
+                                ></Button>
+                        
                     </VerticalStackLayout>
                 </Frame>
 
