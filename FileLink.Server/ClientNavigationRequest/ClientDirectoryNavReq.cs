@@ -46,12 +46,13 @@ public class ClientDirectoryNavReq
 
     void SearchDirectory(string directory, ref string completeServerDirectory)
     {
+        
         string[] subDirectory = Directory.GetDirectories(directory);
     
         if (subDirectory.Length == 0)
         {
             string[] currentDirFiles = Directory.GetFiles(directory);
-            completeServerDirectory += directory.Split("/net9.0/")[1] += ",";
+            completeServerDirectory += directory.Split("/net9.0")[1] += ",";
             foreach (string file in currentDirFiles)
             {
                 string[] pathComponents = file.Split(Path.DirectorySeparatorChar);
@@ -67,7 +68,7 @@ public class ClientDirectoryNavReq
         {
             string[] subdirectory = Directory.GetDirectories(directory);
             string[] currentDirFiles = Directory.GetFiles(directory);
-            completeServerDirectory += directory.Split("/net9.0/")[1] += ",";
+            completeServerDirectory += directory.Split("/net9.0")[1] += ",";
         
             foreach (var folder in subdirectory)
             {
