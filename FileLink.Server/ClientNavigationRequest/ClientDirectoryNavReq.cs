@@ -13,10 +13,20 @@ namespace FileLink.Server.ClientNavigationRequest;
     
     the completeServerDir ends up in this format. 
     
-    root/directory3/sub3_1,file2.txt,file3.txt,file1.txt,
-    root/directory2/sub2_1,file2.txt,file1.txt,
+    root,directory3,directory2,directory1,
+    
+    root/directory3,sub3_1,sub3_3,sub3_2,
+    
     root/directory3/sub3_1,file2.txt,file3.txt,file1.txt,
     root/directory3/sub3_3,file2.txt,file1.txt,
+    
+    root/directory2,sub2_1,
+    root/directory2/sub2_1,file2.txt,file1.txt,
+    
+   root/directory1,sub1_2,sub1_1,file2.txt,file3.txt,file1.txt,
+   root/directory1/sub1_2,file2.txt,file3.txt,file1.txt,
+   root/directory1/sub1_1,file2.txt,file3.txt,file1.txt,
+   
     
     See FileLink.Client.DirectoryNavigation to see the other half of this algo
     
@@ -53,7 +63,28 @@ public class ClientDirectoryNavReq
             
             return;
         }
-
+        else
+        {
+            string[] subdirectory = Directory.GetDirectories(directory);
+            string[] currentDirFiles = Directory.GetFiles(directory);
+            completeServerDirectory += directory.Split("/net9.0/")[1] += ",";
+        
+            foreach (var folder in subdirectory)
+            {
+                string[] pathComponents = folder.Split(Path.DirectorySeparatorChar);
+                if (!pathComponents[pathComponents.Length - 1].Equals(".idea"))
+                    completeServerDirectory += pathComponents[pathComponents.Length - 1] += ",";
+            }
+            foreach (string file in currentDirFiles)
+            {
+                string[] pathComponents = file.Split(Path.DirectorySeparatorChar);
+                if (pathComponents[pathComponents.Length - 1] != ".DS_Store")
+                    completeServerDirectory += pathComponents[pathComponents.Length - 1] += ",";
+            }
+        
+            completeServerDirectory += '\n';
+        }
+    
         foreach (string dir in subDirectory)
             SearchDirectory(Path.Combine(directory, dir), ref completeServerDirectory);
     
