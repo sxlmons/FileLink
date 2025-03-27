@@ -1,3 +1,29 @@
+//-----------------------------------------------------------------------------
+// Copyright (c) 2025 FileLink Project. All rights reserved.
+// Licensed under the MIT License.
+//-----------------------------------------------------------------------------
+//
+// PacketSerializer.cs
+//
+// This class handles the binary serialization and deserialization of network packets,
+// converting Packet objects to byte arrays and vice versa. The serializer maintains a specific
+// byte order for all packet components:
+//
+// 1. Protocol Version (1 byte): Used for backward compatibility if the packet format changes
+// 2. Command Code (4 bytes): Identifies the operation type (login, file list, etc.)
+// 3. Packet ID (16 bytes): UUID that uniquely identifies each packet for tracking, debugging, and matching requests with responses
+// 4. User ID (variable length): Identifies the authenticated user for authorization checks
+// 5. Timestamp (8 bytes): Records when the packet was created for monitoring and timeouts
+// 6. Metadata Count (4 bytes): Number of key-value pairs in the metadata dictionary
+// 7. Metadata Key-Value Pairs: Variable length strings with prefixed length indicators
+// 8. Payload Length (4 bytes): Size of the binary payload
+// 9. Payload (variable): Command-specific data (e.g., file contents, JSON-serialized objects)
+//
+// Error handling is implemented by wrapping operations in try-catch blocks and throwing
+// ProtocolExceptions with meaningful messages. The class validates the protocol version
+// during deserialization to reject incompatible packet formats.
+//-----------------------------------------------------------------------------
+
 using System.Text;
 using FileLink.Server.Core.Exceptions;
 

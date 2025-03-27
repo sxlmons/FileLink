@@ -498,19 +498,69 @@ public class PacketFactory
     // Create a file delete request packet
     public Packet CreateFileDeleteRequest(string userId, string fileId)
     {
-        throw new NotImplementedException();
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.FILE_DELETE_REQUEST,
+            UserId = userId,
+            Metadata =
+            {
+                ["FileId"] = fileId
+            }
+        };
+
+        return packet;
     }
 
     // Create a file delete response packet
     public Packet CreateFileDeleteResponse(bool success, string fileId, string message, string userId)
     {
-        throw new NotImplementedException();
+        var response = new
+        {
+            Success = success,
+            FileId = fileId,
+            Message = message
+        };
+
+        var payload = JsonSerializer.SerializeToUtf8Bytes(response);
+
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.FILE_DELETE_RESPONSE,
+            UserId = userId,
+            Payload = payload,
+            Metadata =
+            {
+                ["Success"] = success.ToString(),
+                ["FileId"] = fileId
+            }
+        };
+
+        return packet;
     }
 
     // Create an Error response packet
     public Packet CreateErrorResponse(int originalCommandCode, string message, string userId = "")
     {
-        throw new NotImplementedException();
+        var response = new
+        {
+            OriginalCommandCode = originalCommandCode,
+            Message = message
+        };
+
+        var payload = JsonSerializer.SerializeToUtf8Bytes(response);
+
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.ERROR,
+            UserId = userId,
+            Payload = payload,
+            Metadata =
+            {
+                ["OriginalCommandCode"] = originalCommandCode.ToString(),
+                ["OriginalCommandName"] = Commands.CommandCode.GetCommandName(originalCommandCode)
+            }
+        };
+        return packet;
     }
 }
     
