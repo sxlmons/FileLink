@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace FileLink.Client.Protocol
@@ -31,6 +32,7 @@ namespace FileLink.Client.Protocol
             {
                 using var ms = new MemoryStream();
                 using var writer = new BinaryWriter(ms);
+                RSA rsa = RSA.Create();
 
                 // Write protocol version
                 writer.Write(PROTOCOL_VERSION);
@@ -68,8 +70,9 @@ namespace FileLink.Client.Protocol
                 // Write payload
                 if (packet.Payload != null)
                 {
-                    writer.Write(packet.Payload.Length);
-                    writer.Write(packet.Payload);
+                   packet.EncryptedPayload = EncryptPayload(packet.Payload, rsa); // Encrypting packet payload yo
+                   writer.Write(packet.Payload.Length);
+                   writer.Write(packet.EncryptedPayload); // Writing the encrypted payload 
                 }
                 else
                 {
@@ -83,14 +86,41 @@ namespace FileLink.Client.Protocol
                 throw new ProtocolException("Error serializing packet", ex);
             }
         }
+        
+        private static byte[] EncryptPayload(byte[] data, RSA rsa) 
+        { // Encrypting payload 
 
+            using (Aes aes = Aes.Create()) { // Using AES encryption as a baseline 
+            
+                aes.GenerateKey(); // Generating key
+                aes.GenerateIV();
 
+                byte[] encryptedData;
+
+                using (ICryptoTransform encryptor = aes.CreateEncryptor()) { // Calling encryptor to perform AES
+                
+                    encryptedData = encryptor.TransformFinalBlock(data, 0, data.Length);
+                }
+            
+                byte[] encryptedKey = rsa.Encrypt(aes.Key, RSAEncryptionPadding.OaepSHA256); // Adding padding
+                byte[] finalData = new byte[encryptedKey.Length + aes.IV.Length + encryptedData.Length]; // creating the final data payload 
+
+                Buffer.BlockCopy(encryptedKey, 0, finalData, 0, encryptedKey.Length);
+                Buffer.BlockCopy(aes.IV, 0, finalData, encryptedKey.Length, aes.IV.Length);
+                Buffer.BlockCopy(encryptedData, 0, finalData, encryptedKey.Length + aes.IV.Length, encryptedData.Length);
+            
+                return finalData;
+            }
+        
+        }
+        
         public Packet Deserialize(byte[] data)
         {
             try
             {
                 using var ms = new MemoryStream(data);
                 using var reader = new BinaryReader(ms);
+                RSA rsa = RSA.Create();
 
                 var packet = new Packet();
 
@@ -137,7 +167,14 @@ namespace FileLink.Client.Protocol
                 int payloadLength = reader.ReadInt32();
                 if (payloadLength > 0)
                 {
-                    packet.Payload = reader.ReadBytes(payloadLength);
+
+                    if (packet.EncryptedPayload != null) // Decrypting packet payload 
+                    {
+                        packet.EncryptedPayload = DecryptPayload(packet.EncryptedPayload, rsa);
+                        packet.EncryptedPayload = reader.ReadBytes(payloadLength); // reader?
+                        
+                    }
+
                 }
 
                 return packet;
@@ -147,7 +184,34 @@ namespace FileLink.Client.Protocol
                 throw new ProtocolException("Error deserializing packet", ex);
             }
         }
+        
+        private static byte[] DecryptPayload(byte[] data, RSA rsa) 
+        { // Decrypting payload 
 
+            using (Aes aes = Aes.Create()) { // Creating new AES instance 
+                
+                int rsaKeySize = rsa.KeySize / 8;
+                int ivSize = aes.BlockSize / 8;
+                
+                byte[] encryptedKey = new byte[rsa.KeySize];
+                byte[] iv = new byte[ivSize];
+                
+                Buffer.BlockCopy(data, 0, encryptedKey, 0, rsaKeySize);
+                Buffer.BlockCopy(data, rsaKeySize, iv, 0, ivSize);
+                
+                byte[] decryptedKey = rsa.Decrypt(encryptedKey, RSAEncryptionPadding.OaepSHA256); // Removing padding and using key to decrypt 
+                aes.Key = decryptedKey;
+                aes.IV = iv;
+
+                using (ICryptoTransform decryptor = aes.CreateDecryptor()) { // Adjusting offsets to ensure integrity of packet 
+                
+                    return decryptor.TransformFinalBlock(data, rsaKeySize + ivSize, data.Length - rsaKeySize - ivSize);
+                
+                }
+            
+            }
+        
+        }
        
         // Serializes a packet including the length prefix
         public byte[] SerializeWithLengthPrefix(Packet packet)

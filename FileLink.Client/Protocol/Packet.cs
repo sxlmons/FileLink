@@ -35,8 +35,12 @@ namespace FileLink.Client.Protocol
         // Gets or sets the binary payload data of the packet.
         // The content and interpretation of this data depends on the command code
         public byte[]? Payload { get; set; }
-
-       
+        
+        
+        // Gets or sets the binary payload data of the packet
+        // Added a new encrypted byte[] for temporary usage
+        // Can be replaced.
+        public byte[]? EncryptedPayload { get; set; }
         // Initializes a new instance of the Packet class with default values
         public Packet()
         {
