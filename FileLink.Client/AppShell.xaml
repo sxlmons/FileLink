@@ -7,9 +7,7 @@
     Shell.FlyoutBehavior="Flyout"
     Title="FileLink.Client">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <ShellContent ContentTemplate="{DataTemplate local:Login}" Route="Login"/>
+    <ShellContent ContentTemplate="{DataTemplate local:MainPage}" Route="MainPage" />
 
 </Shell>

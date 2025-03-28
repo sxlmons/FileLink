@@ -89,7 +89,7 @@
                 <Button Text="Account" 
                         BackgroundColor="Transparent"
                         TextColor="White"
-                        HorizontalOptions="Start" />
+                        HorizontalOptions="Start"/>
 
                 <Button Text="Settings" 
                         BackgroundColor="Transparent"

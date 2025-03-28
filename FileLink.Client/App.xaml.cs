@@ -10,6 +10,7 @@ public partial class App : Application
 {
     
     private readonly CloudServerConnection _serverConnection;
+    private readonly AuthenticationManager _authManager;
     
     public App()
     {
@@ -20,6 +21,7 @@ public partial class App : Application
         
         // Initialize and connect to the server
         _serverConnection = new CloudServerConnection("localhost", 9000);
+        _authManager = new AuthenticationManager(_serverConnection);
         InitializeServerConnection();
     }
     
@@ -37,6 +39,6 @@ public partial class App : Application
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        return new Window(new AppShell());
+        return new Window(new NavigationPage(new Login(_authManager)));
     }
 }
