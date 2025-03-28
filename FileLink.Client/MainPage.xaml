@@ -4,6 +4,7 @@
              xmlns:clientPrototype="clr-namespace:"
              xmlns:client="clr-namespace:FileLink.Client"
              xmlns:fileselector="clr-namespace:FileLink.Client.FileOperations"
+             xmlns:directoryNav="clr-namespace:FileLink.Client.DirectoryNavigation"
              x:Class="FileLink.Client.MainPage"
              x:DataType="client:MainViewModel">
     
@@ -21,80 +22,82 @@
         </Grid.ColumnDefinitions>
 
         <!-- ========== LEFT NAVIGATION ========== -->
-        <VerticalStackLayout
-            Grid.Column="0" 
-            Padding="20,0"
-            Spacing="20"
-            BackgroundColor="#3B2D79">
+        
+        <Grid Grid.Column="0" 
+            BackgroundColor="#3B2D79"
+              RowDefinitions="Auto, *, Auto">
             
-            <!-- App Title / Logo -->
-            <Label 
-                Text="FileLink"
-                FontAttributes="Bold"
-                FontSize="22"
-                TextColor="White"
-                Margin="0,30,0,0"/>
-            
-            <!-- User Profile Section -->
-            <Frame BackgroundColor="#4C3B8A"
-                   CornerRadius="10"
-                   HasShadow="False"
-                   Padding="10"
-                   HorizontalOptions="Fill">
-                <VerticalStackLayout>
-                    <!-- Your avatar image -->
-                    <Image Source="avatar_placeholder.png" 
-                           HeightRequest="50" 
-                           WidthRequest="50"
-                           HorizontalOptions="Center"
-                           Aspect="AspectFit"/>
-                    <Label 
-                        Text="Welcome Back, Joshua!" 
-                        TextColor="White"
-                        HorizontalOptions="Center"
-                        FontSize="14"/>
+            <VerticalStackLayout Spacing="15" Grid.Row="0" Padding="20,0">
+                <!-- App Title / Logo -->
+                <Label 
+                    Text="FileLink"
+                    FontAttributes="Bold"
+                    FontSize="28"
+                    TextColor="White"
+                    Margin="0,30,0,0"/>
+                
+                <!-- User Profile Section -->
+                <Frame BackgroundColor="#4C3B8A"
+                       CornerRadius="10"
+                       HasShadow="False"
+                       Padding="10"
+                       HorizontalOptions="Fill">
+                    <VerticalStackLayout>
+                        <!-- Your avatar image -->
+                        <Image Source="avatar_placeholder.png" 
+                               HeightRequest="75" 
+                               WidthRequest="75"
+                               HorizontalOptions="Center"
+                               Aspect="AspectFit"/>
+                        <Label 
+                            Text="Welcome Back, Joshua!" 
+                            TextColor="White"
+                            HorizontalOptions="Center"
+                            FontSize="14"/>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Navigation Buttons -->
+                <VerticalStackLayout Spacing="10">
+                    <Button Text="My Cloud" 
+                            BackgroundColor="Transparent"
+                            TextColor="White"
+                            HorizontalOptions="Start" />
+
+                    <Button Text="Favourites" 
+                            BackgroundColor="Transparent"
+                            TextColor="White"
+                            HorizontalOptions="Start" />
+
+                    <Button Text="Upload Files" 
+                            BackgroundColor="Transparent"
+                            TextColor="White"
+                            HorizontalOptions="Start" />
+
+                    <Button Text="Ernesto Chat" 
+                            BackgroundColor="Transparent"
+                            TextColor="White"
+                            HorizontalOptions="Start" />
                 </VerticalStackLayout>
-            </Frame>
-
-            <!-- Navigation Buttons -->
-            <VerticalStackLayout Spacing="10">
-                <Button Text="My Cloud" 
+            </VerticalStackLayout>
+            
+            <BoxView BackgroundColor="Transparent"
+                     Grid.Row="1"/>
+            
+            <VerticalStackLayout Grid.Row="2" Padding="20,20">
+                <!-- Bottom Navigation -->
+                <Button Text="Account" 
                         BackgroundColor="Transparent"
                         TextColor="White"
                         HorizontalOptions="Start" />
 
-                <Button Text="Favourites" 
-                        BackgroundColor="Transparent"
-                        TextColor="White"
-                        HorizontalOptions="Start" />
-
-                <Button Text="Upload Files" 
-                        BackgroundColor="Transparent"
-                        TextColor="White"
-                        HorizontalOptions="Start" />
-
-                <Button Text="Ernesto Chat" 
+                <Button Text="Settings" 
                         BackgroundColor="Transparent"
                         TextColor="White"
                         HorizontalOptions="Start" />
             </VerticalStackLayout>
-
-            <!-- Spacer (push Account & Settings to bottom) -->
-            <VerticalStackLayout VerticalOptions="EndAndExpand" />
-
-            <!-- Bottom Navigation -->
-            <Button Text="Account" 
-                    BackgroundColor="Transparent"
-                    TextColor="White"
-                    HorizontalOptions="Start" />
-
-            <Button Text="Settings" 
-                    BackgroundColor="Transparent"
-                    TextColor="White"
-                    HorizontalOptions="Start" />
-        </VerticalStackLayout>
-
-
+        </Grid>
+        
         <!-- ========== MAIN CONTENT AREA ========== -->
         <ScrollView Grid.Column="1" Padding="20">
             <VerticalStackLayout Spacing="20">
@@ -104,12 +107,13 @@
                            BackgroundColor="White"
                            HeightRequest="40"/>
                            
-                <!-- Categories -->
+                <!--
+                
                 <Label Text="Categories"
                        FontAttributes="Bold"
                        FontSize="16"
                        TextColor="#333"/>
-                       
+                
                 <HorizontalStackLayout Spacing="10">
                     <Frame CornerRadius="6"
                            WidthRequest="120"
@@ -189,49 +193,69 @@
                         </VerticalStackLayout>
                     </Frame>
                 </HorizontalStackLayout>
-
-                <!-- Recent Files -->
-                <Label Text="Recent Files"
-                       FontSize="18"
-                       FontAttributes="Bold"
-                       TextColor="#333"/>
-                       
+                -->
+                <Grid ColumnDefinitions="Auto, *, Auto">
+                    
+                    <!-- Recent Files -->
+                    <Label Text="Directories"
+                           Grid.Column="0"
+                           FontSize="26"
+                           FontAttributes="Bold"
+                           TextColor="#333"/>
+                    
+                    <BoxView BackgroundColor="Transparent"
+                             Grid.Column="1"/>
+                    
+                    <Button Text="BACK"
+                            
+                            Command="{Binding DirectoryVM.backButtonCommand}"
+                            IsVisible="{Binding DirectoryVM.IsButtonVisible}"
+                            Grid.Column="2"
+                            />
+                </Grid>
                 <!-- 
                     Use a CollectionView or ListView for a scrollable list of "recent files". 
                     For brevity, here’s a simple CollectionView with static items. 
                 -->
                 <!-- CollectionView of Recent Files -->
-                <CollectionView ItemsSource="{Binding RecentFiles}">
-                    <!-- Define a vertical layout with 10 pixels of spacing between items -->
+                <CollectionView ItemsSource="{Binding DirectoryVM.Files}"
+                                Margin="5"
+                                VerticalScrollBarVisibility="Always">
+    
+                    <!-- Ensure items are wrapped in columns -->
                     <CollectionView.ItemsLayout>
-                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+                        <GridItemsLayout Orientation="Horizontal"
+                                         HorizontalItemSpacing="5"
+                                         VerticalItemSpacing="5"/>
                     </CollectionView.ItemsLayout>
-                    
+    
                     <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <!-- Each file is shown in a Frame with corner radius -->
-                            <Frame CornerRadius="6"
-                                   Padding="10"
-                                   Margin="0,5"
-                                   BackgroundColor="#FFFFFF">
-                                <HorizontalStackLayout Spacing="10">
-                                    <!-- Colored square for category -->
-                                    <BoxView WidthRequest="20"
-                                             HeightRequest="20"
-                                             CornerRadius="8"
-                                             BackgroundColor="White"
-                                             Color="{Binding CategoryColor}" />
-
-                                    <!-- File info -->
-                                    <VerticalStackLayout>
-                                        <Label Text="{Binding FileName}"
-                                               FontAttributes="Bold"
-                                               FontSize="14" />
-                                        <Label Text="{Binding FileSize}"
-                                               FontSize="12" />
-                                    </VerticalStackLayout>
-                                </HorizontalStackLayout>
-                            </Frame>
+                        <DataTemplate x:DataType="{x:Type directoryNav:ShownFiles}">
+                            
+                                
+                                <VerticalStackLayout HorizontalOptions="Center"
+                                                     VerticalOptions="Center"
+                                                     >
+                                    <!-- Image (file/folder) -->
+                                    <Image Source="{Binding pngType}"
+                                           WidthRequest="125"
+                                           HeightRequest="125"
+                                           Aspect="AspectFit">
+                                        <Image.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DirectoryVM.clickDirectoryCommand}"
+                                                                  CommandParameter="{Binding .}">
+                                            </TapGestureRecognizer>
+                                        </Image.GestureRecognizers>
+                                    </Image>
+                                    <!-- File Name -->
+                                    <Label Text="{Binding fileName}" 
+                                           TextColor="Black"
+                                           FontAttributes="Bold"
+                                           FontSize="16"
+                                           HorizontalTextAlignment="Center"
+                                           LineBreakMode="TailTruncation"/>
+                                    
+                                </VerticalStackLayout>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
@@ -330,9 +354,7 @@
                         <Label Text="School_Project (Word Doc)" FontSize="12"/>
                     </VerticalStackLayout>
                 </Frame>
-                
             </VerticalStackLayout>
         </ScrollView>
-
     </Grid>
 </ContentPage>
