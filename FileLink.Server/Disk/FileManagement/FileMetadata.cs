@@ -21,6 +21,9 @@ namespace FileLink.Server.FileManagement;
         // Maybe:
         public DateTime? LastAccessedAt { get; set; }
         
+        // New for the Directory Feature
+        public string DirectoryId { get; set; }
+        
         // Initializes a new instance of the FileMetadata class.
         public FileMetadata()
         {

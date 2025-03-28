@@ -1,4 +1,5 @@
-﻿using FileLink.Client.FileOperations;
+﻿using FileLink.Client.DirectoryNavigation;
+using FileLink.Client.FileOperations;
 using FileLink.Client.Session;
 
 namespace FileLink.Client;
@@ -18,11 +19,13 @@ public partial class MainPage : ContentPage
 public class MainViewModel
 {
     public FileSelector FileVM { get; set; }
+    public DirectoryMap DirectoryVM { get; set; }
     
     CloudSession _session = new CloudSession("localhost", 9000);
 
     public MainViewModel()
     {
         FileVM = new FileSelector(_session);
+        DirectoryVM = new DirectoryMap();
     }
 }

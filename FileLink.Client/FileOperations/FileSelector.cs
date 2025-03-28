@@ -1,8 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Net.Sockets;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Windows.Input;
 using FileLink.Client.Session;
 
@@ -78,15 +76,11 @@ public class FileSelector : INotifyPropertyChanged
         {
             try
             {
-                var fileMetadata = await _session.FileManager.UploadFileAsync(file.fullPath);
-                
-                Console.WriteLine();
-                Console.WriteLine($"Upload complete. File ID: {fileMetadata.Id}");
-                Console.WriteLine($"File Size: {fileMetadata.FormattedSize}");
+                await _session.FileManager.UploadFileAsync(file.fullPath);
             }
             catch(Exception ex)
             {
-                Console.WriteLine($"Inside send file {ex.Message}");
+                Console.WriteLine($"Error Sending File: {ex.Message}");
             }
         }
     }
