@@ -63,7 +63,7 @@ public class FileService
             {
                 TotalChunks = CalculateTotalChunks(fileSize),
                 ChunksReceived = 0,
-                IsComplete = false
+                IsComplete = false,
             };
             
             // Add the metadata to the repository
