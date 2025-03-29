@@ -23,25 +23,56 @@ public class DirectoryRepository : IDirectoryRepository
         LoadMetadata().Wait();
     }
     
-    
+    // Gets directory metadata by directory ID
     public Task<DirectoryMetadata> GetDirectoryMetadataById(string directoryId)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrEmpty(directoryId))
+            return Task.FromResult<DirectoryMetadata>(null);
+
+        lock (_lock)
+        {
+            _metadata.TryGetValue(directoryId, out DirectoryMetadata metadata);
+            return Task.FromResult(metadata);
+        }
     }
 
+    // Gets all directory metadata for a specific user
     public Task<IEnumerable<DirectoryMetadata>> GetDirectoriesByUserId(string userId)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrEmpty(userId))
+            return Task.FromResult<IEnumerable<DirectoryMetadata>>(Array.Empty<DirectoryMetadata>());
+
+        lock (_lock)
+        {
+            var userDirectories = _metadata.Values
+                .Where(m => m.UserId == userId)
+                .OrderBy(m => m.Name)
+                .ToList();
+                
+            return Task.FromResult<IEnumerable<DirectoryMetadata>>(userDirectories);
+        }
     }
 
+    // Gets directory metadata for directories with a specific parent
     public Task<IEnumerable<DirectoryMetadata>> GetDirectoriesByParentId(string parentDirectoryId, string userId)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrEmpty(userId))
+            return Task.FromResult<IEnumerable<DirectoryMetadata>>(Array.Empty<DirectoryMetadata>());
+
+        lock (_lock)
+        {
+            var directories = _metadata.Values
+                .Where(m => m.UserId == userId && (parentDirectoryId == null ? string.IsNullOrEmpty(m.ParentDirectoryId) : m.ParentDirectoryId == parentDirectoryId))
+                .OrderBy(m => m.Name)
+                .ToList();
+                
+            return Task.FromResult<IEnumerable<DirectoryMetadata>>(directories);
+        }
     }
 
     public Task<IEnumerable<DirectoryMetadata>> GetRootDirectories(string userId)
     {
-        throw new NotImplementedException();
+        return GetDirectoriesByParentId(null, userId);
     }
 
     public Task<bool> AddDirectoryMetadata(DirectoryMetadata directoryMetadata)
@@ -59,9 +90,23 @@ public class DirectoryRepository : IDirectoryRepository
         throw new NotImplementedException();
     }
 
+    // Checks if a directory exists with the given name and parent
     public Task<bool> DirectoryExistsWithName(string name, string parentDirectoryId, string userId)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(userId))
+            return Task.FromResult(false);
+
+        lock (_lock)
+        {
+            bool exists = _metadata.Values.Any(d => 
+                d.UserId == userId && 
+                d.Name.Equals(name, StringComparison.OrdinalIgnoreCase) && 
+                ((parentDirectoryId == null && string.IsNullOrEmpty(d.ParentDirectoryId)) || 
+                 (d.ParentDirectoryId == parentDirectoryId)));
+                
+            return Task.FromResult(exists);
+        }
+        
     }
 
     public Task<IEnumerable<DirectoryMetadata>> GetAllSubdirectoriesRecursive(string directoryId)
