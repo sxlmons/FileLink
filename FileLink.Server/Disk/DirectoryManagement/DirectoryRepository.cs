@@ -171,11 +171,12 @@ public class DirectoryRepository : IDirectoryRepository
 
         lock (_lock)
         {
-            bool exists = _metadata.Values.Any(
-                d => d.UserId == userId 
-                     && d.Name.Equals(name, StringComparison.OrdinalIgnoreCase) 
-                     && ((parentDirectoryId == null && string.IsNullOrEmpty(d.ParentDirectoryId)) 
-                         || (d.ParentDirectoryId == parentDirectoryId)));
+            bool exists = _metadata.Values.Any(d => d.UserId 
+                == userId 
+                && d.Name.Equals(name, StringComparison.OrdinalIgnoreCase) 
+                && ((parentDirectoryId == null 
+                && string.IsNullOrEmpty(d.ParentDirectoryId)) 
+                || (d.ParentDirectoryId == parentDirectoryId)));
             return Task.FromResult(exists);
         }
         
