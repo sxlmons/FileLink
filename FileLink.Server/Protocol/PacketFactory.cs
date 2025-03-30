@@ -563,7 +563,330 @@ public class PacketFactory
         return packet;
     }
     
+    //------------------------------------------
+    // NEW DIRECTORY FACTORY METHODS EXTENSION - 
+    //------------------------------------------
     
+    // Creates a directory creation request packet
+    public Packet CreateDirectoryCreateRequest(string userId, string directoryName, string parentDirectoryId = null)
+    {
+        var directoryInfo = new
+        {
+            DirectoryName = directoryName,
+            ParentDirectoryId = parentDirectoryId
+        };
+
+        var payload = JsonSerializer.SerializeToUtf8Bytes(directoryInfo);
+
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.DIRECTORY_CREATE_REQUEST,
+            UserId = userId,
+            Payload = payload,
+            Metadata =
+            {
+                ["DirectoryName"] = directoryName
+            }
+        };
+
+        if (!string.IsNullOrEmpty(parentDirectoryId))
+        {
+            packet.Metadata["ParentDirectoryId"] = parentDirectoryId;
+        }
+
+        return packet;
+    }
     
+    // Creates a directory response packet
+    public Packet CreateDirectoryCreateResponse(bool success, string directoryId, string directoryName, string message, string userId)
+    {
+        var response = new
+        {
+            Success = success,
+            DirectoryId = directoryId,
+            DirectoryName = directoryName,
+            Message = message
+        };
+
+        var payload = JsonSerializer.SerializeToUtf8Bytes(response);
+
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.DIRECTORY_CREATE_RESPONSE,
+            UserId = userId,
+            Payload = payload,
+            Metadata =
+            {
+                ["Success"] = success.ToString(),
+                ["DirectoryId"] = directoryId,
+                ["DirectoryName"] = directoryName
+            }
+        };
+
+        return packet;
+    }
+    
+    // Create a directory list request
+    public Packet CreateDirectoryListRequest(string userId, string parentDirectoryId = null)
+    {
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.DIRECTORY_LIST_REQUEST,
+            UserId = userId
+        };
+
+        if (!string.IsNullOrEmpty(parentDirectoryId))
+        {
+            packet.Metadata["ParentDirectoryId"] = parentDirectoryId;
+        }
+
+        return packet;
+    }
+    
+    // Create a directory response packet 
+    public Packet CreateDirectoryListResponse(IEnumerable<object> directories, string parentDirectoryId, string userId)
+    {
+        var payload = JsonSerializer.SerializeToUtf8Bytes(directories);
+
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.DIRECTORY_LIST_RESPONSE,
+            UserId = userId,
+            Payload = payload
+        };
+
+        if (!string.IsNullOrEmpty(parentDirectoryId))
+        {
+            packet.Metadata["ParentDirectoryId"] = parentDirectoryId;
+        }
+
+        packet.Metadata["Count"] = directories is ICollection<object> collection ? collection.Count.ToString() : "unknown";
+
+        return packet;
+    }
+    
+    // Create a directory rename request
+    public Packet CreateDirectoryRenameRequest(string userId, string directoryId, string newName)
+    {
+        var renameInfo = new
+        {
+            DirectoryId = directoryId,
+            NewName = newName
+        };
+
+        var payload = JsonSerializer.SerializeToUtf8Bytes(renameInfo);
+
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.DIRECTORY_RENAME_REQUEST,
+            UserId = userId,
+            Payload = payload,
+            Metadata =
+            {
+                ["DirectoryId"] = directoryId,
+                ["NewName"] = newName
+            }
+        };
+
+        return packet;
+    }
+    
+    // Creates a directory rename response packet
+    public Packet CreateDirectoryRenameResponse(bool success, string directoryId, string newName, string message, string userId)
+    {
+        var response = new
+        {
+            Success = success,
+            DirectoryId = directoryId,
+            NewName = newName,
+            Message = message
+        };
+
+        var payload = JsonSerializer.SerializeToUtf8Bytes(response);
+
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.DIRECTORY_RENAME_RESPONSE,
+            UserId = userId,
+            Payload = payload,
+            Metadata =
+            {
+                ["Success"] = success.ToString(),
+                ["DirectoryId"] = directoryId,
+                ["NewName"] = newName
+            }
+        };
+
+        return packet;
+    }
+    
+    // Create a directory delete request packet
+    public Packet CreateDirectoryDeleteRequest(string userId, string directoryId, bool recursive)
+    {
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.DIRECTORY_DELETE_REQUEST,
+            UserId = userId,
+            Metadata =
+            {
+                ["DirectoryId"] = directoryId,
+                ["Recursive"] = recursive.ToString()
+            }
+        };
+
+        return packet;
+    }
+    
+    // Create a directory delete response 
+    public Packet CreateDirectoryDeleteResponse(bool success, string directoryId, string message, string userId)
+    {
+        var response = new
+        {
+            Success = success,
+            DirectoryId = directoryId,
+            Message = message
+        };
+
+        var payload = JsonSerializer.SerializeToUtf8Bytes(response);
+
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.DIRECTORY_DELETE_RESPONSE,
+            UserId = userId,
+            Payload = payload,
+            Metadata =
+            {
+                ["Success"] = success.ToString(),
+                ["DirectoryId"] = directoryId
+            }
+        };
+
+        return packet;
+    }
+    
+    // Create a directory move request packet
+    public Packet CreateFileMoveRequest(string userId, IEnumerable<string> fileIds, string targetDirectoryId)
+    {
+        var moveInfo = new
+        {
+            FileIds = fileIds,
+            TargetDirectoryId = targetDirectoryId
+        };
+
+        var payload = JsonSerializer.SerializeToUtf8Bytes(moveInfo);
+
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.FILE_MOVE_REQUEST,
+            UserId = userId,
+            Payload = payload,
+            Metadata =
+            {
+                ["FileCount"] = fileIds is ICollection<string> collection ? collection.Count.ToString() : "unknown"
+            }
+        };
+
+        if (!string.IsNullOrEmpty(targetDirectoryId))
+        {
+            packet.Metadata["TargetDirectoryId"] = targetDirectoryId;
+        }
+        else
+        {
+            packet.Metadata["TargetDirectoryId"] = "root";
+        }
+
+        return packet;
+    }
+    
+    // Creates a file move response packet
+    public Packet CreateFileMoveResponse(bool success, int fileCount, string targetDirectoryId, string message, string userId)
+    {
+        var response = new
+        {
+            Success = success,
+            FileCount = fileCount,
+            TargetDirectoryId = targetDirectoryId,
+            Message = message
+        };
+
+        var payload = JsonSerializer.SerializeToUtf8Bytes(response);
+
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.FILE_MOVE_RESPONSE,
+            UserId = userId,
+            Payload = payload
+        };
+
+        packet.Metadata["Success"] = success.ToString();
+        packet.Metadata["FileCount"] = fileCount.ToString();
+        if (!string.IsNullOrEmpty(targetDirectoryId))
+        {
+            packet.Metadata["TargetDirectoryId"] = targetDirectoryId;
+        }
+        else
+        {
+            packet.Metadata["TargetDirectoryId"] = "root";
+        }
+
+        return packet;
+    }
+    
+    // Creates a directory contents request packet
+    public Packet CreateDirectoryContentsRequest(string userId, string directoryId = null)
+    {
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.DIRECTORY_CONTENTS_REQUEST,
+            UserId = userId
+        };
+
+        if (!string.IsNullOrEmpty(directoryId))
+        {
+            packet.Metadata["DirectoryId"] = directoryId;
+        }
+        else
+        {
+            packet.Metadata["DirectoryId"] = "root";
+        }
+
+        return packet;
+    }
+    
+    // Creates a directory contents response
+    public Packet CreateDirectoryContentsResponse(IEnumerable<object> files, IEnumerable<object> directories, string directoryId, string userId)
+    {
+        var contentsInfo = new
+        {
+            Files = files,
+            Directories = directories,
+            DirectoryId = directoryId
+        };
+
+        var payload = JsonSerializer.SerializeToUtf8Bytes(contentsInfo);
+
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.DIRECTORY_CONTENTS_RESPONSE,
+            UserId = userId,
+            Payload = payload,
+            Metadata =
+            {
+                ["FileCount"] = files is ICollection<object> fileCollection ? fileCollection.Count.ToString() : "unknown",
+                ["DirectoryCount"] = directories is ICollection<object> dirCollection ? dirCollection.Count.ToString() : "unknown"
+            }
+        };
+
+        if (!string.IsNullOrEmpty(directoryId))
+        {
+            packet.Metadata["DirectoryId"] = directoryId;
+        }
+        else
+        {
+            packet.Metadata["DirectoryId"] = "root";
+        }
+
+        return packet;
+    }
 }
     
