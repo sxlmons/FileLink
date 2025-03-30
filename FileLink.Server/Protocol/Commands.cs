@@ -34,6 +34,20 @@ public static class Commands
         public const int FILE_DOWNLOAD_CHUNK_RESPONSE = 223;
         public const int FILE_DOWNLOAD_COMPLETE_REQUEST = 224;
         public const int FILE_DOWNLOAD_COMPLETE_RESPONSE = 225;
+        
+        // Directory Operations (240-251)
+        public const int DIRECTORY_CREATE_REQUEST = 240;
+        public const int DIRECTORY_CREATE_RESPONSE = 241;
+        public const int DIRECTORY_LIST_REQUEST = 242;
+        public const int DIRECTORY_LIST_RESPONSE = 243;
+        public const int DIRECTORY_RENAME_REQUEST = 244;
+        public const int DIRECTORY_RENAME_RESPONSE = 245;
+        public const int DIRECTORY_DELETE_REQUEST = 246;
+        public const int DIRECTORY_DELETE_RESPONSE = 247;
+        public const int FILE_MOVE_REQUEST = 248;
+        public const int FILE_MOVE_RESPONSE = 249;
+        public const int DIRECTORY_CONTENTS_REQUEST = 250;
+        public const int DIRECTORY_CONTENTS_RESPONSE = 251;
 
         // File delete commands
         public const int FILE_DELETE_REQUEST = 230;
@@ -71,6 +85,20 @@ public static class Commands
                 FILE_DOWNLOAD_COMPLETE_RESPONSE => "FILE_DOWNLOAD_COMPLETE_RESPONSE",
                 FILE_DELETE_REQUEST => "FILE_DELETE_REQUEST",
                 FILE_DELETE_RESPONSE => "FILE_DELETE_RESPONSE",
+                
+                // Directory operation commands
+                DIRECTORY_CREATE_REQUEST => "DIRECTORY_CREATE_REQUEST",
+                DIRECTORY_CREATE_RESPONSE => "DIRECTORY_CREATE_RESPONSE",
+                DIRECTORY_LIST_REQUEST => "DIRECTORY_LIST_REQUEST",
+                DIRECTORY_LIST_RESPONSE => "DIRECTORY_LIST_RESPONSE",
+                DIRECTORY_RENAME_REQUEST => "DIRECTORY_RENAME_REQUEST",
+                DIRECTORY_RENAME_RESPONSE => "DIRECTORY_RENAME_RESPONSE",
+                DIRECTORY_DELETE_REQUEST => "DIRECTORY_DELETE_REQUEST",
+                DIRECTORY_DELETE_RESPONSE => "DIRECTORY_DELETE_RESPONSE",
+                FILE_MOVE_REQUEST => "FILE_MOVE_REQUEST",
+                FILE_MOVE_RESPONSE => "FILE_MOVE_RESPONSE",
+                DIRECTORY_CONTENTS_REQUEST => "DIRECTORY_CONTENTS_REQUEST",
+                DIRECTORY_CONTENTS_RESPONSE => "DIRECTORY_CONTENTS_RESPONSE",
                 SUCCESS => "SUCCESS",
                 ERROR => "ERROR",
                 _ => $"UNKNOWN({code})"
@@ -92,6 +120,13 @@ public static class Commands
                 FILE_DOWNLOAD_CHUNK_REQUEST => FILE_DOWNLOAD_CHUNK_RESPONSE,
                 FILE_DOWNLOAD_COMPLETE_REQUEST => FILE_DOWNLOAD_COMPLETE_RESPONSE,
                 FILE_DELETE_REQUEST => FILE_DELETE_RESPONSE,
+                // Directory operation commands
+                DIRECTORY_CREATE_REQUEST => DIRECTORY_CREATE_RESPONSE,
+                DIRECTORY_LIST_REQUEST => DIRECTORY_LIST_RESPONSE,
+                DIRECTORY_RENAME_REQUEST => DIRECTORY_RENAME_RESPONSE,
+                DIRECTORY_DELETE_REQUEST => DIRECTORY_DELETE_RESPONSE,
+                FILE_MOVE_REQUEST => FILE_MOVE_RESPONSE,
+                DIRECTORY_CONTENTS_REQUEST => DIRECTORY_CONTENTS_RESPONSE,
                 _ => ERROR
             };
         }
