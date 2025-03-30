@@ -1,8 +1,10 @@
 using FileLink.Server.Core.Exceptions;
 using FileLink.Server.Services.Logging;
 using System.Text.Json;
+using FileLink.Server.Disk.DirectoryManagement;
+using FileLink.Server.FileManagement;
 
-namespace FileLink.Server.FileManagement;
+namespace FileLink.Server.Disk.FileManagement;
 
 // Repository for file metadata storage
 // Implements the repository pattern with file-based storage
@@ -13,6 +15,7 @@ public class FileRepository : IFileRepository
     private readonly object _lock = new object();
     private Dictionary<string, FileMetadata> _metadata = new Dictionary<string, FileMetadata>();
     private readonly LogService _logService;
+    private readonly IDirectoryRepository _directoryRepository;
     
     // Initializes a new instance of the FileRepository class
     // We need the directory for the files and the file metadata, plus our logging service
@@ -200,6 +203,93 @@ public class FileRepository : IFileRepository
         {
             _logService.Error($"Error saving metadata: {ex.Message}", ex);
             throw new FileOperationException("Failed to save metadata", ex);
+        }
+    }
+    
+    //-----------------------------------
+    // NEW: Directory Feature Extension
+    //-----------------------------------
+    
+    // Gets all metadata for files in a specific directory
+    public Task<IEnumerable<FileMetadata>> GetFilesByDirectoryId(string directoryId, string userId)
+    {
+        if (string.IsNullOrEmpty(userId))
+            return Task.FromResult<IEnumerable<FileMetadata>>(Array.Empty<FileMetadata>());
+
+        lock (_lock)
+        {
+            var files = _metadata.Values
+                .Where(m => m.UserId == userId && 
+                            (directoryId == null ? 
+                                string.IsNullOrEmpty(m.DirectoryId) : 
+                                m.DirectoryId == directoryId))
+                .OrderByDescending(m => m.UpdatedAt)
+                .ToList();
+                
+            return Task.FromResult<IEnumerable<FileMetadata>>(files);
+        }
+    }
+    
+    // Moves files to a different directory
+    public async Task<bool> MoveFilesToDirectory(IEnumerable<string> fileIds, string directoryId, string userId)
+    {
+        if (string.IsNullOrEmpty(userId) || fileIds == null)
+            return false;
+
+        var fileIdList = fileIds.ToList();
+        if (fileIdList.Count == 0)
+            return true;
+
+        // Validate directory if specified
+        if (!string.IsNullOrEmpty(directoryId))
+        {
+            // This would require dependency injection of the DirectoryRepository
+            // For now, assume this check is done at the service layer
+        }
+
+        bool allSuccessful = true;
+        foreach (var fileId in fileIdList)
+        {
+            var file = await GetFileMetadataById(fileId);
+            if (file == null || file.UserId != userId)
+            {
+                _logService.Warning($"File not found or access denied when moving file {fileId} to directory {directoryId}");
+                allSuccessful = false;
+                continue;
+            }
+
+            // Update file metadata with new directory
+            file.DirectoryId = directoryId;
+            file.UpdatedAt = DateTime.Now;
+
+            // Update storage metadata
+            bool updated = await UpdateFileMetadataAsync(file);
+            if (!updated)
+            {
+                _logService.Error($"Failed to update metadata for file {fileId} when moving to directory {directoryId}");
+                allSuccessful = false;
+            }
+        }
+
+        return allSuccessful;
+    }
+    
+    // Gets a directory by its ID
+    public async Task<DirectoryMetadata> GetDirectoryById(string directoryId)
+    {
+        try
+        {
+            // This implementation depends on having access to the DirectoryRepository
+            // We'll use the private field _directoryRepository
+            if (string.IsNullOrEmpty(directoryId))
+                return null;
+        
+            return await _directoryRepository.GetDirectoryMetadataById(directoryId);
+        }
+        catch (Exception ex)
+        {
+            _logService.Error($"Error getting directory by ID {directoryId}: {ex.Message}", ex);
+            return null;
         }
     }
 }

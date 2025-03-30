@@ -1,5 +1,6 @@
 using FileLink.Server.Authentication;
 using FileLink.Server.Commands;
+using FileLink.Server.Disk.FileManagement;
 using FileLink.Server.FileManagement;
 using FileLink.Server.Network;
 using FileLink.Server.Services.Logging;

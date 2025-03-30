@@ -1,21 +1,29 @@
-namespace FileLink.Server.FileManagement;
+using FileLink.Server.Disk.DirectoryManagement;
+using FileLink.Server.FileManagement;
+
+namespace FileLink.Server.Disk.FileManagement
+{
 
 // Interface for the file repository
 // Implements the repository pattern for file metadata storage
-public interface IFileRepository
-{
-    // Gets the metadata by file ID
-    Task<FileMetadata?> GetFileMetadataById(string fileId);
-    
-    // Gets all file metadata for a specific user 
-    Task<IEnumerable<FileMetadata>> GetFileMetadataByUserId(string userId);
-    
-    // Adds new file metadata
-    Task<bool> AddFileMetadataAsync(FileMetadata fileMetadata);
-    
-    // Updates existing file metadata
-    Task<bool> UpdateFileMetadataAsync(FileMetadata fileMetadata);
-    
-    // Deletes file metadata
-    Task<bool> DeleteFileMetadataAsync(string fileId);
+    public interface IFileRepository
+    {
+        // File Management
+        Task<FileMetadata?> GetFileMetadataById(string fileId);
+
+        Task<IEnumerable<FileMetadata>> GetFileMetadataByUserId(string userId);
+
+        Task<bool> AddFileMetadataAsync(FileMetadata fileMetadata);
+
+        Task<bool> UpdateFileMetadataAsync(FileMetadata fileMetadata);
+
+        Task<bool> DeleteFileMetadataAsync(string fileId);
+
+        // DIRECTORY FEATURE EXTENSION
+        Task<IEnumerable<FileMetadata>> GetFilesByDirectoryId(string directoryId, string userId);
+        Task<bool> MoveFilesToDirectory(IEnumerable<string> fileIds, string directoryId, string userId);
+        Task<DirectoryMetadata> GetDirectoryById(string directoryId);
+
+
+    }
 }
