@@ -11,6 +11,12 @@ namespace FileLink.Client.Protocol
     {
         // Protocol versioning
         private const byte PROTOCOL_VERSION = 1;
+        private RSA _rsa;
+        public void LoadRsaKey(RSAParameters parameters)
+        {
+            _rsa = RSA.Create();
+            _rsa.ImportParameters(parameters);
+        }
         
         // Header Structure:
         // - Protocol Version (1 byte)
@@ -26,13 +32,20 @@ namespace FileLink.Client.Protocol
 
        
         // Serializes a packet into a byte array
-        public byte[] Serialize(Packet packet)
+        public byte[] Serialize(Packet packet, RSA rsa = null)
         {
             try
             {
                 using var ms = new MemoryStream();
                 using var writer = new BinaryWriter(ms);
-                RSA rsa = RSA.Create();
+
+                rsa ??= _rsa; // Changes
+                if (rsa == null)
+                {
+                    
+                    throw new InvalidOperationException("RSA parameters are required.");
+                    
+                }
 
                 // Write protocol version
                 writer.Write(PROTOCOL_VERSION);
@@ -114,13 +127,20 @@ namespace FileLink.Client.Protocol
         
         }
         
-        public Packet Deserialize(byte[] data)
+        public Packet Deserialize(byte[] data, RSA rsa = null)
         {
             try
             {
                 using var ms = new MemoryStream(data);
                 using var reader = new BinaryReader(ms);
-                RSA rsa = RSA.Create();
+                
+                rsa ??= _rsa; // Changes
+                if (rsa == null)
+                {
+                    
+                    throw new  InvalidOperationException("RSA parameters are required.");
+                    
+                }
 
                 var packet = new Packet();
 
