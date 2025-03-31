@@ -1,4 +1,5 @@
 using System.Text.Json;
+using FileLink.Server.Disk.DirectoryManagement;
 using FileLink.Server.FileManagement;
 using FileLink.Server.Network;
 using FileLink.Server.Protocol;
@@ -11,13 +12,15 @@ namespace FileLink.Server.Commands;
 public class FileUploadCommandHandler : ICommandHandler
 {
     private readonly FileService _fileService;
+    private readonly DirectoryService _directoryService;
     private readonly LogService _logService;
     private readonly PacketFactory _packetFactory = new PacketFactory();
 
     // Constructor
-    public FileUploadCommandHandler(FileService fileService, LogService logService)
+    public FileUploadCommandHandler(FileService fileService, DirectoryService directoryService, LogService logService)
     {
         _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
+        _directoryService = directoryService ?? throw new ArgumentNullException(nameof(directoryService));
         _logService = logService ?? throw new ArgumentNullException(nameof(logService));
     }
 
@@ -38,8 +41,7 @@ public class FileUploadCommandHandler : ICommandHandler
             if (string.IsNullOrEmpty(session.UserId))
             {
                 _logService.Warning("Received file upload request from unauthenticated session.");
-                return _packetFactory.CreateErrorResponse(packet.CommandCode, "You must be logged in to upload files.",
-                    "");
+                return _packetFactory.CreateErrorResponse(packet.CommandCode, "You must be logged in to upload files.", "");
             }
 
             // Check if the user ID in the packet matches the session user ID
@@ -47,8 +49,7 @@ public class FileUploadCommandHandler : ICommandHandler
             {
                 _logService.Warning(
                     $"User ID mismatch in file upload request: {packet.UserId} vs session: {session.UserId}");
-                return _packetFactory.CreateErrorResponse(packet.CommandCode,
-                    "User ID in packet does not match the authenticated user.", session.UserId);
+                return _packetFactory.CreateErrorResponse(packet.CommandCode, "User ID in packet does not match the authenticated user.", session.UserId);
             }
 
             // Handle the appropriate upload command
@@ -65,15 +66,13 @@ public class FileUploadCommandHandler : ICommandHandler
 
                 default:
                     _logService.Warning($"Unexpected command code in file upload handler: {packet.CommandCode}");
-                    return _packetFactory.CreateErrorResponse(packet.CommandCode,
-                        "Unexpected command code for file upload operation.", session.UserId);
+                    return _packetFactory.CreateErrorResponse(packet.CommandCode, "Unexpected command code for file upload operation.", session.UserId);
             }
         }
         catch (Exception ex)
         {
             _logService.Error($"Error processing file upload request: {ex.Message}", ex);
-            return _packetFactory.CreateErrorResponse(packet.CommandCode,
-                "An error occurred during the file upload operation.", session.UserId);
+            return _packetFactory.CreateErrorResponse(packet.CommandCode, "An error occurred during the file upload operation.", session.UserId);
         }
     }
 
@@ -85,8 +84,7 @@ public class FileUploadCommandHandler : ICommandHandler
             if (packet.Payload == null || packet.Payload.Length == 0)
             {
                 _logService.Warning($"Received file upload init request with no payload from user {session.UserId}");
-                return _packetFactory.CreateFileUploadInitResponse(
-                    false, "", "No file information provided.", session.UserId);
+                return _packetFactory.CreateFileUploadInitResponse(false, "", "No file information provided.", session.UserId);
             }
 
             // Deserialize the payload to extract file information
@@ -94,18 +92,35 @@ public class FileUploadCommandHandler : ICommandHandler
 
             if (fileInfo == null || string.IsNullOrEmpty(fileInfo.FileName))
             {
-                _logService.Warning(
-                    $"Received file upload init request with invalid file information from user {session.UserId}");
-                return _packetFactory.CreateFileUploadInitResponse(
-                    false, "", "File name is required.", session.UserId);
+                _logService.Warning($"Received file upload init request with invalid file information from user {session.UserId}");
+                return _packetFactory.CreateFileUploadInitResponse(false, "", "File name is required.", session.UserId);
             }
 
             if (fileInfo.FileSize <= 0)
             {
-                _logService.Warning(
-                    $"Received file upload init request with invalid file size: {fileInfo.FileSize} from user {session.UserId}");
-                return _packetFactory.CreateFileUploadInitResponse(
-                    false, "", "File size must be greater than zero.", session.UserId);
+                _logService.Warning($"Received file upload init request with invalid file size: {fileInfo.FileSize} from user {session.UserId}");
+                return _packetFactory.CreateFileUploadInitResponse(false, "", "File size must be greater than zero.", session.UserId);
+            }
+            
+            // Check for directory ID in the metadata
+            string directoryId = null;
+            if (packet.Metadata.TryGetValue("DirectoryId", out string dirId) && dirId != "root")
+            {
+                directoryId = dirId;
+                    
+                // Validate that the directory exists and the user has access to it
+                var directory = await _directoryService.GetDirectoryById(directoryId, session.UserId);
+                if (directory == null)
+                {
+                    _logService.Warning($"Directory not found or not owned by user: {directoryId}");
+                    return _packetFactory.CreateFileUploadInitResponse(
+                        false, 
+                        "", 
+                        "Directory not found or you do not have permission to upload to it.", 
+                        session.UserId);
+                }
+                    
+                _logService.Info($"Validated directory for upload: {directory.Name} (ID: {directoryId})");
             }
 
             // Initialize the file upload
@@ -118,22 +133,33 @@ public class FileUploadCommandHandler : ICommandHandler
             if (fileMetadata == null)
             {
                 _logService.Error($"Failed to initialize file upload for user {session.UserId}");
-                return _packetFactory.CreateFileUploadInitResponse(
-                    false, "", "Failed to initialize file upload.", session.UserId);
+                return _packetFactory.CreateFileUploadInitResponse(false, "", "Failed to initialize file upload.", session.UserId);
+            }
+            
+            // Set the directory ID if specified
+            if (!string.IsNullOrEmpty(directoryId))
+            {
+                _logService.Debug($"Setting directory ID {directoryId} for file {fileMetadata.Id}");
+                fileMetadata.DirectoryId = directoryId;
+                    
+                // Update the file metadata with the directory ID
+                bool updateSuccess = await _fileService.UpdateFileMetadata(fileMetadata);
+                if (!updateSuccess)
+                {
+                    _logService.Warning($"Failed to update file metadata with directory ID: {directoryId}");
+                    // Continue anyway as this is not a critical error
+                }
             }
 
-            _logService.Info(
-                $"File upload initialized: {fileInfo.FileName} (ID: {fileMetadata.Id}) for user {session.UserId}");
+            _logService.Info($"File upload initialized: {fileInfo.FileName} (ID: {fileMetadata.Id}) for user {session.UserId}");
 
             // Create and return the response
-            return _packetFactory.CreateFileUploadInitResponse(
-                true, fileMetadata.Id, "File upload initialized successfully.", session.UserId);
+            return _packetFactory.CreateFileUploadInitResponse(true, fileMetadata.Id, "File upload initialized successfully.", session.UserId);
         }
         catch (Exception ex)
         {
             _logService.Error($"Error handling file upload init request: {ex.Message}", ex);
-            return _packetFactory.CreateFileUploadInitResponse(
-                false, "", $"Error initializing file upload: {ex.Message}", session.UserId);
+            return _packetFactory.CreateFileUploadInitResponse(false, "", $"Error initializing file upload: {ex.Message}", session.UserId);
         }
     }
 

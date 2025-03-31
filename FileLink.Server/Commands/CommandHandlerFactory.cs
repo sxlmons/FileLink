@@ -2,6 +2,8 @@ using FileLink.Server.Authentication;
 using FileLink.Server.FileManagement;
 using FileLink.Server.Services.Logging;
 using FileLink.Server.Commands.Auth;
+using FileLink.Server.Commands.Directory;
+using FileLink.Server.Disk.DirectoryManagement;
 
 namespace FileLink.Server.Commands 
 {   
@@ -11,14 +13,16 @@ namespace FileLink.Server.Commands
     {
         private readonly AuthenticationService _authService;
         private readonly FileService _fileService;
+        private readonly DirectoryService _directoryService;
         private readonly LogService  _logService;
         private readonly List<ICommandHandler> _handlers = new List<ICommandHandler>();
         
         // Initializes a new instance of the CommandHandlerFactory class
-        public CommandHandlerFactory(AuthenticationService authService, FileService fileService, LogService logService)
+        public CommandHandlerFactory(AuthenticationService authService, FileService fileService, DirectoryService directoryService, LogService logService)
         {
             _authService = authService ?? throw new ArgumentNullException(nameof(authService));
             _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
+            _directoryService = directoryService ?? throw new ArgumentNullException(nameof(directoryService));
             _logService = logService ?? throw new ArgumentNullException(nameof(logService));
             
             // Register all command handlers
@@ -29,15 +33,25 @@ namespace FileLink.Server.Commands
         private void RegisterDefaultHandlers()
         {
             // Authentication handlers
-            RegisterHandler(new CreateAccountCommandHandler(_authService, _logService));
             RegisterHandler(new LoginCommandHandler(_authService, _logService));
             RegisterHandler(new LogoutCommandHandler(_authService, _logService));
+            RegisterHandler(new CreateAccountCommandHandler(_authService, _logService));
             
             // File operation handlers
             RegisterHandler(new FileListCommandHandler(_fileService, _logService));
-            RegisterHandler(new FileUploadCommandHandler(_fileService, _logService));
+            
+            // Updated to pass DirectoryService to FileUploadCommandHandler
+            RegisterHandler(new FileUploadCommandHandler(_fileService, _directoryService, _logService));
             RegisterHandler(new FileDownloadCommandHandler(_fileService, _logService));
             RegisterHandler(new FileDeleteCommandHandler(_fileService, _logService));
+            
+            // Directory operation handlers
+            RegisterHandler(new DirectoryCreateCommandHandler(_directoryService, _logService));
+            RegisterHandler(new DirectoryListCommandHandler(_directoryService, _logService));
+            RegisterHandler(new DirectoryRenameCommandHandler(_directoryService, _logService));
+            RegisterHandler(new DirectoryDeleteCommandHandler(_directoryService, _logService));
+            // RegisterHandler(new FileMoveCommandHandler(_directoryService, _logService));
+            RegisterHandler(new DirectoryContentsCommandHandler(_directoryService, _logService));
         }
         
         // Creates a command handler for the specified command code
