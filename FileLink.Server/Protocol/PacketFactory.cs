@@ -89,39 +89,27 @@ public class PacketFactory
     //
     public Packet CreateAccountCreationResponse(bool success, string message, string userId = "")
     {
-        // [Applied across all responses]
-        // Create an anonymous object with the success flag and message to be serialized into the payload.
-        // This structured data will be deserialized by the client to understand the account creation result.
-        var response = new
-        {
+        var response = new 
+        { 
             Success = success, 
-            Message = message, 
+            Message = message,
             UserId = userId
         };
-        
-        // [Applicable across all returned packets]
-        // Construct a new Packet object with the appropriate command code and payload.
-        // This packet will be transmitted to the Server for an account creation request.
+            
         var payload = JsonSerializer.SerializeToUtf8Bytes(response);
 
-        // [Applicable across all returned packets]
-        // Construct a new Packet object with the appropriate command code and payload.
-        // This packet will be transmitted to the Server for an account creation response.
         var packet = new Packet
         {
             CommandCode = Commands.CommandCode.CREATE_ACCOUNT_RESPONSE,
             UserId = userId,
-            Payload = payload,
-            Metadata =
-            {
-                ["Success"] = success.ToString()
-            }
+            Payload = payload
         };
 
-        // Return the fully constructed response packet ready to be sent to the client.
-        // This packet contains all necessary information about the account creation.
+        packet.Metadata["Success"] = success.ToString();
+            
         return packet;
     }
+
 
     // [CLIENT] Create a login request packet
     public Packet CreateLoginRequest(string username, string password)
@@ -139,25 +127,23 @@ public class PacketFactory
     // [SERVER] Create a login response packet
     public Packet CreateLoginResponse(bool success, string message, string userId = "")
     {
-        var response = new
-        {
-            Success = success,
+        var response = new 
+        { 
+            Success = success, 
             Message = message
         };
-        
+            
         var payload = JsonSerializer.SerializeToUtf8Bytes(response);
 
         var packet = new Packet
         {
             CommandCode = Commands.CommandCode.LOGIN_RESPONSE,
             UserId = userId,
-            Payload = payload,
-            Metadata =
-            {
-                ["Success"] = success.ToString()
-            }
+            Payload = payload
         };
 
+        packet.Metadata["Success"] = success.ToString();
+            
         return packet;
     }
 
@@ -174,24 +160,22 @@ public class PacketFactory
     // [SERVER] Create logout response packet
     public Packet CreateLogoutResponse(bool success, string message)
     {
-        var response = new
-        {
-            Success = success,
+        var response = new 
+        { 
+            Success = success, 
             Message = message
         };
-        
+            
         var payload = JsonSerializer.SerializeToUtf8Bytes(response);
 
         var packet = new Packet
         {
             CommandCode = Commands.CommandCode.LOGOUT_RESPONSE,
-            Payload = payload,
-            Metadata =
-            {
-                ["Success"] = success.ToString()
-            }
+            Payload = payload
         };
 
+        packet.Metadata["Success"] = success.ToString();
+            
         return packet;
     }
 

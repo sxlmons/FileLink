@@ -5,6 +5,7 @@ using FileLink.Server.Commands.Auth;
 using FileLink.Server.Commands.Directory;
 using FileLink.Server.Commands.File;
 using FileLink.Server.Disk.DirectoryManagement;
+using FileLink.Server.Disk.FileManagement;
 
 namespace FileLink.Server.Commands 
 {   
@@ -40,8 +41,6 @@ namespace FileLink.Server.Commands
             
             // File operation handlers
             RegisterHandler(new FileListCommandHandler(_fileService, _logService));
-            
-            // Updated to pass DirectoryService to FileUploadCommandHandler
             RegisterHandler(new FileUploadCommandHandler(_fileService, _directoryService, _logService));
             RegisterHandler(new FileDownloadCommandHandler(_fileService, _logService));
             RegisterHandler(new FileDeleteCommandHandler(_fileService, _logService));

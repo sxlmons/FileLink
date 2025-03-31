@@ -54,29 +54,28 @@ namespace FileLink.Server.SessionState
         {
             try
             {
-                // Check if there is data within the login packet
                 if (packet.Payload == null || packet.Payload.Length == 0)
                 {
-                    _logService.Error("Received login request with empty payload");
-                    return _packetFactory.CreateLoginResponse(false, "Username and password are required");
+                    _logService.Warning("Received login request with no payload");
+                    return _packetFactory.CreateLoginResponse(false, "Invalid login request. No credentials provided.");
                 }
-                
+
                 // Deserialize the payload to extract username and password
                 var credentials = JsonSerializer.Deserialize<LoginCredentials>(packet.Payload);
-
+                
                 if (string.IsNullOrEmpty(credentials.Username) || string.IsNullOrEmpty(credentials.Password))
                 {
-                    _logService.Warning("Received login request with empty credentials");
+                    _logService.Warning("Received login request with missing credentials");
                     _failedLoginAttempts++;
-                    return _packetFactory.CreateLoginResponse(false, "Username and password are required");
+                    return _packetFactory.CreateLoginResponse(false, "Username and password are required.");
                 }
-                
-                // Attempt to Authenticate
-                var user = await _authService.Authenticate(credentials.Username, credentials.Password);
 
+                // Attempt to authenticate
+                var user = await _authService.Authenticate(credentials.Username, credentials.Password);
+                
                 if (user != null)
                 {
-                    _logService.Info($"Authenticated user: {user.Username} ID: {user.Id}");
+                    _logService.Info($"User authenticated successfully: {user.Username} (ID: {user.Id})");
                     
                     // Update the client session with the authenticated user
                     ClientSession.UserId = user.Id;
@@ -84,7 +83,7 @@ namespace FileLink.Server.SessionState
                     // Transition to authenticated state
                     ClientSession.TransitionToState(ClientSession.StateFactory.CreateAuthenticatedState(ClientSession));
                     
-                    return _packetFactory.CreateLoginResponse(true, "Authenticated successfully");
+                    return _packetFactory.CreateLoginResponse(true, "Authentication successful.", user.Id);
                 }
                 else
                 {
@@ -104,12 +103,12 @@ namespace FileLink.Server.SessionState
             catch (AuthenticationException ex)
             {
                 _logService.Error($"Authentication error: {ex.Message}", ex);
-                return _packetFactory.CreateLoginResponse(false, "Authentication error:", ex.Message);
+                return _packetFactory.CreateLoginResponse(false, "Authentication error: " + ex.Message);
             }
             catch (Exception ex)
             {
                 _logService.Error($"Unexpected error during login: {ex.Message}", ex);
-                return _packetFactory.CreateLoginResponse(false, "Unexpected error:", ex.Message);  
+                return _packetFactory.CreateLoginResponse(false, "An unexpected error occurred during login.");
             }
         }
 
@@ -118,37 +117,33 @@ namespace FileLink.Server.SessionState
         {
             try
             {
-                // Check if there is data within the create account packet
                 if (packet.Payload == null || packet.Payload.Length == 0)
                 {
                     _logService.Warning("Received account creation request with no payload");
-                    return _packetFactory.CreateAccountCreationResponse(false,
-                        "Invalid account creation request. No information provided.");
+                    return _packetFactory.CreateAccountCreationResponse(false, "Invalid account creation request. No information provided.");
                 }
 
-                // Deserialize the payload to extract the user information 
+                // Deserialize the payload to extract user information
                 var accountInfo = JsonSerializer.Deserialize<AccountCreationInfo>(packet.Payload);
-
+                
                 if (string.IsNullOrEmpty(accountInfo.Username) || string.IsNullOrEmpty(accountInfo.Password))
                 {
-                    _logService.Warning("Received account creation request with missing fields");
+                    _logService.Warning("Received account creation request with missing required fields");
                     return _packetFactory.CreateAccountCreationResponse(false, "Username and password are required.");
                 }
 
-                // Attempt to create the account 
-                var user = await _authService.RegisterUser(accountInfo.Username, accountInfo.Password, "User",
-                    accountInfo.Email);
-
+                // Attempt to create the account
+                var user = await _authService.RegisterUser(accountInfo.Username, accountInfo.Password, "User");
+                
                 if (user != null)
                 {
-                    _logService.Info($"Registered user: {user.Username} ID: {user.Id} Email: {user.Email}");
-                    return _packetFactory.CreateAccountCreationResponse(true, "Registered successfully");
+                    _logService.Info($"Account created successfully: {user.Username} (ID: {user.Id})");
+                    return _packetFactory.CreateAccountCreationResponse(true, "Account created successfully.", user.Id);
                 }
                 else
                 {
                     _logService.Warning($"Failed to create account for username: {accountInfo.Username}");
-                    return _packetFactory.CreateAccountCreationResponse(false,
-                        "Failed to create account. Username may already be taken.");
+                    return _packetFactory.CreateAccountCreationResponse(false, "Failed to create account. Username may already be taken.");
                 }
             }
             catch (AuthenticationException ex)

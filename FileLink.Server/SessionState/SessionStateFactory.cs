@@ -1,5 +1,6 @@
 using FileLink.Server.Authentication;
 using FileLink.Server.Disk.DirectoryManagement;
+using FileLink.Server.Disk.FileManagement;
 using FileLink.Server.FileManagement;
 using FileLink.Server.Network;
 using FileLink.Server.Services.Logging;
@@ -27,26 +28,35 @@ namespace FileLink.Server.SessionState
         // Creates a new authentication required state for a client session 
         public ISessionState CreateAuthRequiredState(ClientSession clientSession)
         {
-            ArgumentNullException.ThrowIfNull(clientSession);
+            if (clientSession == null)
+                throw new ArgumentNullException(nameof(clientSession));
+
             return new AuthRequiredState(clientSession, _authService, _logService);
         }
 
         public ISessionState CreateAuthenticatedState(ClientSession clientSession)
         {
-            ArgumentNullException.ThrowIfNull(clientSession);
+            if (clientSession == null)
+                throw new ArgumentNullException(nameof(clientSession));
+
             return new AuthenticatedState(clientSession, _fileService, _directoryService, _logService);
         }
 
         public ISessionState CreateTransferState(ClientSession clientSession, FileMetadata fileMetadata, bool isUploading)
         {
-            ArgumentNullException.ThrowIfNull(clientSession);
-            ArgumentNullException.ThrowIfNull(fileMetadata);
+            if (clientSession == null)
+                throw new ArgumentNullException(nameof(clientSession));
+            if (fileMetadata == null)
+                throw new ArgumentNullException(nameof(fileMetadata));
+
             return new TransferState(clientSession, _fileService, fileMetadata, isUploading, _logService);
         }
 
         public ISessionState CreateDisconnectingState(ClientSession clientSession)
         {
-            ArgumentNullException.ThrowIfNull(clientSession);
+            if (clientSession == null)
+                throw new ArgumentNullException(nameof(clientSession));
+
             return new DisconnectingState(clientSession, _logService);
         }
     }

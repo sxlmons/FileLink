@@ -19,11 +19,12 @@ public class FileRepository : IFileRepository
     
     // Initializes a new instance of the FileRepository class
     // We need the directory for the files and the file metadata, plus our logging service
-    public FileRepository(string metadataPath, string storagePath, LogService logService)
+    public FileRepository(string metadataPath, string storagePath, IDirectoryRepository directoryRepository, LogService logService)
     {
-        _metadataPath = metadataPath; // add exceptions
-        _storagePath = storagePath;
-        _logService = logService;
+        _metadataPath = metadataPath ?? throw new ArgumentNullException(nameof(metadataPath));
+        _storagePath = storagePath ?? throw new ArgumentNullException(nameof(storagePath));
+        _directoryRepository = directoryRepository ?? throw new ArgumentNullException(nameof(directoryRepository));
+        _logService = logService ?? throw new ArgumentNullException(nameof(logService));
         
         // Ensure that directories exist
         Directory.CreateDirectory(_storagePath);
@@ -74,10 +75,11 @@ public class FileRepository : IFileRepository
             {
                 _logService.Warning($"File {fileMetadata.Id} already exists");
                 return false;
-            } 
+            }
         }
         // Save changes to storage and log
         await SaveMetadata();
+        
         _logService.Info($"File {fileMetadata.FileName} added (ID: {fileMetadata.Id})");
         return true;
     }   

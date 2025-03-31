@@ -1,4 +1,8 @@
+
+using System;
 using System.Net.Sockets;
+using System.Threading;
+using System.Threading.Tasks;
 using FileLink.Server.Commands;
 using FileLink.Server.Protocol;
 using FileLink.Server.Server;
@@ -7,19 +11,20 @@ using FileLink.Server.SessionState;
 
 namespace FileLink.Server.Network
 {
-    // Represents a client connection to the server 
+    // Represents a client connection to the server.
     // Manages the communication with the client and implements the session state machine
     public class ClientSession : IDisposable
     {
-        private SessionState.ISessionState _currentState;
         private readonly TcpClient _client;
-        private readonly NetworkStream _stream; 
+        private readonly NetworkStream _stream;
+        private SessionState.ISessionState _currentState;
         private readonly PacketSerializer _packetSerializer = new PacketSerializer();
         private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
-        private readonly SemaphoreSlim _receiveLock = new SemaphoreSlim(1, 1);   
+        private readonly SemaphoreSlim _receiveLock = new SemaphoreSlim(1, 1);
+        private bool _disposed = false;
         private readonly CancellationToken _cancellationToken;
         private readonly ServerConfiguration _config;
-        private bool _disposed = false; 
+
         
         public Guid SessionId { get; }
         public string UserId { get; set; } = string.Empty;
@@ -27,13 +32,12 @@ namespace FileLink.Server.Network
         public LogService LogService { get; }
         public CommandHandlerFactory CommandHandlerFactory { get; }
         public SessionStateFactory StateFactory { get; }
-        public DateTime LastActiviyTime { get; private set; }
+        public DateTime LastActivityTime { get; private set; }
         
-        // IMPORTANT: This controls how large of files we can send. Right now it is set to 5MB
-        private const int MaxPacketSize = 5 * 1024 * 1024;
-
+        private const int MaxPacketSize = 25 * 1024 * 1024;
+        
+        // Initializes a new instance of the ClientSession class
         public ClientSession(
-            // Params
             TcpClient client,
             LogService logService,
             SessionStateFactory stateFactory,
@@ -41,7 +45,6 @@ namespace FileLink.Server.Network
             ServerConfiguration config,
             CancellationToken cancellationToken)
         {
-            // Initialization
             _client = client ?? throw new ArgumentNullException(nameof(client));
             LogService = logService ?? throw new ArgumentNullException(nameof(logService));
             StateFactory = stateFactory ?? throw new ArgumentNullException(nameof(stateFactory));
@@ -51,44 +54,46 @@ namespace FileLink.Server.Network
             
             _stream = client.GetStream();
             SessionId = Guid.NewGuid();
-            LastActiviyTime = DateTime.Now;
+            LastActivityTime = DateTime.Now;
             
-            // Set initial state to AuthRequiredState
-            _currentState = stateFactory.CreateAuthRequiredState(this);
+            // Set initial state to authentication required
+            _currentState = StateFactory.CreateAuthRequiredState(this);
         }
-
+        
+        // Starts the session processing loop
         public async Task StartSession()
         {
             try
             {
-                // Enter initial state
+                // Enter the initial state
                 await _currentState.OnEnter();
+                
                 LogService.Info($"Session started: {SessionId} from {GetClientAddress()}");
-
+                
                 // Process packets until cancelled or disconnected
                 while (!_cancellationToken.IsCancellationRequested && _client.Connected)
                 {
                     try
                     {
-                        // Receive that fricken packet yo
+                        // Receive a packet
                         var packet = await ReceivePacket();
                         if (packet == null)
                         {
-                            LogService.Debug($"Null packet received, client may have been disconnected: {SessionId}");
+                            LogService.Debug($"Null packet received, client may have disconnected: {SessionId}");
                             break;
                         }
 
-                        // Update last activity time 
-                        LastActiviyTime = DateTime.Now;
-
-                        // Log the packet yo
+                        // Update last activity time
+                        LastActivityTime = DateTime.Now;
+                        
+                        // Log the packet
                         LogService.LogPacket(packet, false, SessionId);
-
+                        
                         // Process the packet
                         var response = await _currentState.HandlePacket(packet);
-
-                        // Send the response 
-                        if (response == null)
+                        
+                        // Send the response
+                        if (response != null)
                         {
                             LogService.LogPacket(response, true, SessionId);
                             await SendPacket(response);
@@ -97,15 +102,17 @@ namespace FileLink.Server.Network
                     catch (OperationCanceledException)
                     {
                         LogService.Info($"Session operation cancelled: {SessionId}");
+                        break;
                     }
                     catch (IOException ex)
                     {
-                        LogService.Error($"IO Exception: {SessionId}: {ex.Message}, {ex}");
+                        LogService.Error($"IO error in session {SessionId}: {ex.Message}", ex);
+                        break;
                     }
                     catch (Exception ex)
                     {
-                        // Continue processing the next packet unless disconnected
-                        LogService.Error($"Error processing packet in session: {SessionId}: {ex.Message}, {ex}");
+                        LogService.Error($"Error processing packet in session {SessionId}: {ex.Message}", ex);
+                        // Continue processing next packet unless disconnected
                         if (!_client.Connected)
                             break;
                     }
@@ -113,21 +120,22 @@ namespace FileLink.Server.Network
             }
             catch (Exception ex)
             {
-                LogService.Error($"Session loop terminated with error: {ex.Message}, {ex}");
+                LogService.Error($"Session loop terminated with error: {ex.Message}", ex);
             }
             finally
             {
                 await Disconnect("Session loop terminated");
             }
         }
-        
-        // Receives a packet from the client 
+
+       
+        /// Receives a packet from the client.
         public async Task<Packet> ReceivePacket()
         {
             await _receiveLock.WaitAsync(_cancellationToken);
             try
             {
-                // Read the packet length
+                // Read the packet length (4 bytes)
                 byte[] lengthBuffer = new byte[4];
                 int bytesRead = await _stream.ReadAsync(lengthBuffer, 0, 4, _cancellationToken);
                 if (bytesRead < 4)
@@ -135,52 +143,54 @@ namespace FileLink.Server.Network
                     LogService.Debug($"Connection closed while reading packet length: {bytesRead} bytes read");
                     return null;
                 }
-                
+
                 // Convert to integer (packet length)
                 int packetLength = BitConverter.ToInt32(lengthBuffer, 0);
                 if (packetLength <= 0 || packetLength > MaxPacketSize)
                 {
-                    LogService.Warning($"Invalid packet length: {packetLength}");
+                    LogService.Warning($"Invalid packet length received: {packetLength}");
                     return null;
                 }
-                
+
                 // Read the packet data
                 byte[] packetBuffer = new byte[packetLength];
                 int totalBytesRead = 0;
                 while (totalBytesRead < packetLength)
                 {
                     int bytesRemaining = packetLength - totalBytesRead;
-                    int readSize = Math.Min (bytesRemaining, _config.NetworkBufferSize);
+                    int readSize = Math.Min(bytesRemaining, _config.NetworkBufferSize);
                     
                     bytesRead = await _stream.ReadAsync(
                         packetBuffer, 
                         totalBytesRead, 
-                        readSize, 
+                        readSize,
                         _cancellationToken);
-
+                    
                     if (bytesRead == 0)
                     {
-                        LogService.Debug($"Connection closed while reading packet data");
-                        return null!;
+                        LogService.Debug("Connection closed while reading packet data");
+                        return null;
                     }
+                    
                     totalBytesRead += bytesRead;
                 }
-                // Deserialize the packet yo
+
+                // Deserialize the packet
                 var packet = _packetSerializer.Deserialize(packetBuffer);
                 return packet;
             }
-            finally 
+            finally
             {
                 _receiveLock.Release();
             }
         }
-        
-        // Sends a packet to the client 
+
+        // Sends a packet to the client
         public async Task SendPacket(Packet packet)
         {
-            if  (packet == null)
+            if (packet == null)
                 throw new ArgumentNullException(nameof(packet));
-            
+
             await _sendLock.WaitAsync(_cancellationToken);
             try
             {
@@ -204,14 +214,14 @@ namespace FileLink.Server.Network
                 _sendLock.Release();
             }
         }
-        
-        // Transitions the session to a new state 
-        public void TransitionToState(SessionState.ISessionState newState)
+
+        // Transitions the session to a new state
+        public void TransitionToState(ISessionState newState)
         {
-            if  (newState == null)
+            if (newState == null)
                 throw new ArgumentNullException(nameof(newState));
-            
-            LogService.Debug($"Sessions {SessionId} transitioning from {_currentState.GetType().Name} to {newState.GetType().Name}");
+
+            LogService.Debug($"Session {SessionId} transitioning from {_currentState.GetType().Name} to {newState.GetType().Name}");
             
             // Exit the current state
             _currentState.OnExit().Wait();
@@ -219,10 +229,10 @@ namespace FileLink.Server.Network
             // Set the new state
             _currentState = newState;
             
-            // Enter the new state 
+            // Enter the new state
             _currentState.OnEnter().Wait();
-        } 
-        
+        }
+
         // Disconnects the client session
         public async Task Disconnect(string reason)
         {
@@ -238,6 +248,7 @@ namespace FileLink.Server.Network
                 {
                     TransitionToState(StateFactory.CreateDisconnectingState(this));
                 }
+                
                 // Close the connection
                 _client.Close();
             }
@@ -247,29 +258,30 @@ namespace FileLink.Server.Network
             }
             finally
             {
+                // Dispose resources
                 Dispose();
             }
         }
-        
-        // Gets the clients IP address and port
-        public string GetClientAddress()
+
+        // Gets the client's IP address and port
+        private string GetClientAddress()
         {
             try
             {
                 return _client.Client.RemoteEndPoint?.ToString() ?? "Unknown";
             }
-            catch 
+            catch
             {
                 return "Unknown";
             }
         }
-        
-        // Checks if the session has timed out 
+
+        // Checks if the session has timed out
         public bool HasTimedOut(int timeoutMinutes)
         {
-            return DateTime.Now.Subtract(LastActiviyTime).TotalMinutes > timeoutMinutes;
+            return (DateTime.Now - LastActivityTime).TotalMinutes > timeoutMinutes;
         }
-        
+
         // Disposes resources used by the client session
         public void Dispose()
         {
@@ -285,11 +297,11 @@ namespace FileLink.Server.Network
             }
             catch (Exception ex)
             {
-                LogService.Error($"Error during dispose: {ex.Message}", ex);
+                LogService.Error($"Error disposing session: {ex.Message}", ex);
             }
             finally
             {
-                _disposed = true;   
+                _disposed = true;
             }
         }
     }

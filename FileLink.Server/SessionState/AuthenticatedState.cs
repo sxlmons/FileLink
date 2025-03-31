@@ -2,6 +2,7 @@ using System.Text.Json;
 using FileLink.Server.Commands.Directory;
 using FileLink.Server.Commands.File;
 using FileLink.Server.Disk.DirectoryManagement;
+using FileLink.Server.Disk.FileManagement;
 using FileLink.Server.FileManagement;
 using FileLink.Server.Network;
 using FileLink.Server.Protocol;
@@ -47,6 +48,13 @@ namespace FileLink.Server.SessionState
 
             try
             {
+                // Use the command handler factory to get the appropriate handler
+                var handler = ClientSession.CommandHandlerFactory.CreateHandler(packet.CommandCode);
+                
+                if (handler != null)
+                {
+                    return await handler.Handle(packet, ClientSession);
+                }
                 // All commands available while in authenticated state
                 switch (packet.CommandCode)
                 {

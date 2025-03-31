@@ -34,7 +34,7 @@ public class PacketSerializer
 {
     // Protocol Versioning 
     private const byte PROTOCOL_VERSION = 1;
-    
+
     // Header Structure:
     // - Protocol Version (1 byte)
     // - Command Code (4 bytes)
@@ -46,7 +46,7 @@ public class PacketSerializer
     // - Metadata Key-Value Pairs (variable)
     // - Payload Length (4 bytes)
     // - Payload (variable)
-    
+
     // Serializes a packet into a byte array
     public byte[] Serialize(Packet packet)
     {
@@ -55,13 +55,17 @@ public class PacketSerializer
             using var ms = new MemoryStream();
             using var writer = new BinaryWriter(ms);
 
-            // Write protocol version, Write command code, Write packet ID
+            // Write protocol version
             writer.Write(PROTOCOL_VERSION);
+
+            // Write command code
             writer.Write(packet.CommandCode);
+
+            // Write packet ID
             writer.Write(packet.PacketId.ToByteArray());
 
             // Write user ID
-            byte[] userIdBytes = Encoding.UTF8.GetBytes(packet.UserId);
+            byte[] userIdBytes = Encoding.UTF8.GetBytes(packet.UserId ?? string.Empty);
             writer.Write(userIdBytes.Length);
             writer.Write(userIdBytes);
 
@@ -99,11 +103,12 @@ public class PacketSerializer
         }
         catch (Exception ex)
         {
-            throw new ProtocolException("Packet serialization failed", ex);
+            throw new ProtocolException("Error serializing packet", ex);
         }
     }
+
     
-    // Deserialize byte array into a packet
+    // Deserializes a byte array into a packet
     public Packet Deserialize(byte[] data)
     {
         try
@@ -113,14 +118,14 @@ public class PacketSerializer
 
             var packet = new Packet();
 
-            // Read protocol version 
+            // Read protocol version
             byte version = reader.ReadByte();
             if (version != PROTOCOL_VERSION)
             {
                 throw new ProtocolException($"Unsupported protocol version: {version}");
             }
 
-            // Read command code 
+            // Read command code
             packet.CommandCode = reader.ReadInt32();
 
             // Read packet ID
@@ -152,7 +157,7 @@ public class PacketSerializer
                 packet.Metadata[key] = value;
             }
 
-            // Read Payload
+            // Read payload
             int payloadLength = reader.ReadInt32();
             if (payloadLength > 0)
             {
@@ -161,9 +166,9 @@ public class PacketSerializer
 
             return packet;
         }
-        catch(Exception ex) when (ex is ProtocolException)
+        catch (Exception ex) when (!(ex is ProtocolException))
         {
-            throw new ProtocolException("Packet deserialization failed", ex);
+            throw new ProtocolException("Error deserializing packet", ex);
         }
     }
 }

@@ -3,7 +3,7 @@ using FileLink.Server.Network;
 using FileLink.Server.Protocol;
 using FileLink.Server.Services.Logging;
 
-namespace FileLink.Server.Commands
+namespace FileLink.Server.Commands.Auth
 {
     // Command handler for logout requests
     // implements the command pattern

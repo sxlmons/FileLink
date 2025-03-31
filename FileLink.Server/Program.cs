@@ -4,7 +4,7 @@ namespace FileLink.Server
 {
     // Serves as the main entry point of the program, will initialize 
     // the server engine and begin listening for connections.
-    internal class Program
+    class Program
     {
         private static ServerEngine _app;
         private static ManualResetEvent _shutdownEvent = new ManualResetEvent(false);

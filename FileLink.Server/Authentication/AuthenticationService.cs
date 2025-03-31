@@ -24,18 +24,18 @@ namespace FileLink.Server.Authentication
             {
                 if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 {
-                    _logService.Warning($"Authentication failed: username and password are required.");
+                    _logService.Warning("Authentication attempt with empty username or password");
                     return null;
                 }
-                
-                _logService.Debug($"Authenticating user: {username}");
+
+                _logService.Debug($"Authentication attempt for username: {username}");
                 
                 // Validate credentials
                 var user = await _userRepository.ValidateCredentials(username, password);
-
+                
                 if (user != null)
                 {
-                    _logService.Info($"Authenticated user: {username} (ID: {user.Id})");
+                    _logService.Info($"User authenticated successfully: {username} (ID: {user.Id})");
                     
                     // Create user directory for file storage if it doesn't exist
                     EnsureUserDirectoryExists(user.Id);
@@ -44,13 +44,13 @@ namespace FileLink.Server.Authentication
                 }
                 else
                 {
-                    _logService.Warning($"Authentication failed for {username}.");
+                    _logService.Warning($"Authentication failed for username: {username}");
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                _logService.Error($"Error while authenticating user: {ex.Message}", ex);
+                _logService.Error($"Error during authentication: {ex.Message}", ex);
                 throw new AuthenticationException("Authentication failed.", ex);
             }
         }
@@ -62,48 +62,48 @@ namespace FileLink.Server.Authentication
             {
                 if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 {
-                    _logService.Warning($"Registration attempt with an empty username and password.");
+                    _logService.Warning("Registration attempt with empty username or password");
                     return null;
                 }
-                
+
                 // Check if a user with this username already exists
                 var existingUser = await _userRepository.GetUserByUsername(username);
                 if (existingUser != null)
                 {
-                    _logService.Warning($"Registration attempt with {existingUser.Username} already exists.");
+                    _logService.Warning($"Registration failed. Username already exists: {username}");
                     return null;
                 }
-                
+
                 _logService.Info($"Registering new user: {username}");
                 
-                // Create the user 
+                // Create the user
                 var userRepository = _userRepository as UserRepository;
                 if (userRepository == null)
                 {
-                    throw new AuthenticationException("Registration failed.");
+                    throw new AuthenticationException("User repository does not support user creation.");
                 }
                 
                 var user = await userRepository.CreateUser(username, password, email, role);
-
+                
                 if (user != null)
                 {
-                    _logService.Info($"Created new user: {username} (ID: {user.Id})");
+                    _logService.Info($"User registered successfully: {username} (ID: {user.Id})");
                     
-                    // Create user directory for file storage 
+                    // Create user directory for file storage
                     EnsureUserDirectoryExists(user.Id);
-
+                    
                     return user;
                 }
                 else
                 {
-                    _logService.Warning($"Registration failed for {username}.");
+                    _logService.Warning($"Registration failed for username: {username}");
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                _logService.Error($"Error while registering user: {ex.Message}", ex);
-                throw new AuthenticationException("Registration failed.", ex);
+                _logService.Error($"Error during user registration: {ex.Message}", ex);
+                throw new AuthenticationException("User registration failed.", ex);
             }
         }
         

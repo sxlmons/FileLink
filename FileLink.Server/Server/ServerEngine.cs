@@ -3,7 +3,6 @@ using FileLink.Server.Commands;
 using FileLink.Server.Disk;
 using FileLink.Server.Disk.DirectoryManagement;
 using FileLink.Server.Disk.FileManagement;
-using FileLink.Server.FileManagement;
 using FileLink.Server.Network;
 using FileLink.Server.Services.Logging;
 using FileLink.Server.SessionState;
@@ -15,17 +14,17 @@ public class ServerEngine
 {
     private FileRepository _fileRepository;
     private FileService _fileService;
+    private DirectoryRepository _directoryRepository;
+    private DirectoryService _directoryService;
     private TcpServer _tcpServer;
     private ClientSessionManager _clientSessionManager;
     private LogService _logService;
     private FileLogger _fileLogger;
-    private IUserRepository _userRepository;
+    private UserRepository _userRepository;
     private AuthenticationService _authService;
     private SessionStateFactory _sessionStateFactory;
     private CommandHandlerFactory _commandHandlerFactory;
     private bool _initialized = false;
-    private DirectoryService _directoryService;
-    private IDirectoryRepository _directoryRepository;
 
     // Gets the server configuration
     public static ServerConfiguration Configuration { get; private set; }
@@ -45,24 +44,30 @@ public class ServerEngine
         {
             // Ensure directories exist
             Configuration.EnsureDirectoriesExist();
-            
+
             // Initialize logging
             _fileLogger = new FileLogger(Configuration.LogFilePath);
             _logService = new LogService(_fileLogger);
-            _logService.Info("Initializing server engine");
-            _logService.Info($"Server configuration: port={Configuration.Port}, MaxConcurrentClients={Configuration.MaxConcurrentClients}");
-                
+            _logService.Info("Cloud File Server starting...");
+            _logService.Info($"Server configuration: Port={Configuration.Port}, MaxConcurrentClients={Configuration.MaxConcurrentClients}");
+
             // Initialize the physical storage service first
             var storageService = new PhysicalStorageService(Configuration.FileStoragePath, _logService);
+
+            // Initialize repositories in correct order
+            _directoryRepository = new DirectoryRepository(Configuration.FileMetadataPath, _logService);
             
-            // Initialize authentication components
+            // FileRepository now depends on DirectoryRepository
+            _fileRepository = new FileRepository(Configuration.FileMetadataPath, Configuration.FileStoragePath, _directoryRepository, _logService);
             _userRepository = new UserRepository(Configuration.UsersDataPath, _logService);
+
+            // Initialize authentication service
             _authService = new AuthenticationService(_userRepository, _logService);
-            
-            // Initialize file management components
-            _fileRepository = new FileRepository(Configuration.FileMetadataPath, Configuration.FileStoragePath, _logService);
-            _fileService = new FileService(_fileRepository, Configuration.FileStoragePath, _logService, Configuration.ChunkSize);
-            
+
+            // Initialize directory and file services with PhysicalStorageService
+            _directoryService = new DirectoryService(_directoryRepository, _fileRepository, storageService, _logService);
+            _fileService = new FileService(_fileRepository, storageService, _logService, Configuration.ChunkSize);
+
             // Initialize client session management
             _clientSessionManager = new ClientSessionManager(_logService, Configuration);
 
@@ -74,11 +79,11 @@ public class ServerEngine
             _tcpServer = new TcpServer(Configuration.Port, _logService, _clientSessionManager, _commandHandlerFactory, _sessionStateFactory, Configuration);
 
             _initialized = true;
-            _logService.Info("Cloud File Server initialized successfully");
+            _logService.Info("FileLink Server initialized successfully");
         }
         catch (Exception ex)
         {
-            _logService?.Fatal("Failed to initialize Cloud File Server", ex);
+            _logService?.Fatal("Failed to initialize FileLink Server", ex);
             throw;
         }
         
@@ -94,12 +99,12 @@ public class ServerEngine
 
         try
         {
-            _logService.Info("Starting Cloud File Server...");
+            _logService.Info("Starting FileLink Server...");
             await _tcpServer.Start();
         }
         catch (Exception ex)
         {
-            _logService.Fatal("Failed to start Cloud File Server", ex);
+            _logService.Fatal("Failed to start FileLink Server", ex);
             throw;
         }
     }
@@ -109,7 +114,7 @@ public class ServerEngine
     {
         try
         {
-            _logService.Info("Stopping Cloud File Server...");
+            _logService.Info("Stopping FileLink Server...");
                 
             // Stop the server components in reverse order
             if (_tcpServer != null)
@@ -122,11 +127,11 @@ public class ServerEngine
                 await _clientSessionManager.DisconnectAllSessions("Server shutting down");
             }
                 
-            _logService.Info("Cloud File Server stopped");
+            _logService.Info("FileLink Server stopped");
         }
         catch (Exception ex)
         {
-            _logService.Error("Error stopping Cloud File Server", ex);
+            _logService.Error("Error stopping FileLink Server", ex);
             throw;
         }
     }
