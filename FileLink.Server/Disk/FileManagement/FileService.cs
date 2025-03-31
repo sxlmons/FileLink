@@ -284,4 +284,31 @@ public class FileService
         // return the truncated or same filename 
         return fileName;
     }
+    
+    public async Task<bool> UpdateFileMetadata(FileMetadata fileMetadata)
+    {
+        if (fileMetadata == null)
+            throw new ArgumentNullException(nameof(fileMetadata));
+    
+        try
+        {
+            bool success = await _fileRepository.UpdateFileMetadataAsync(fileMetadata);
+        
+            if (success)
+            {
+                _logService.Debug($"File metadata updated: {fileMetadata.FileName} (ID: {fileMetadata.Id})");
+            }
+            else
+            {
+                _logService.Warning($"Failed to update metadata for file {fileMetadata.Id}");
+            }
+        
+            return success;
+        }
+        catch (Exception ex)
+        {
+            _logService.Error($"Error updating file metadata: {ex.Message}", ex);
+            return false;
+        }
+    }
 }

@@ -1,5 +1,7 @@
 using FileLink.Server.Authentication;
 using FileLink.Server.Commands;
+using FileLink.Server.Disk;
+using FileLink.Server.Disk.DirectoryManagement;
 using FileLink.Server.Disk.FileManagement;
 using FileLink.Server.FileManagement;
 using FileLink.Server.Network;
@@ -22,7 +24,9 @@ public class ServerEngine
     private SessionStateFactory _sessionStateFactory;
     private CommandHandlerFactory _commandHandlerFactory;
     private bool _initialized = false;
-    
+    private DirectoryService _directoryService;
+    private IDirectoryRepository _directoryRepository;
+
     // Gets the server configuration
     public static ServerConfiguration Configuration { get; private set; }
     
@@ -48,6 +52,9 @@ public class ServerEngine
             _logService.Info("Initializing server engine");
             _logService.Info($"Server configuration: port={Configuration.Port}, MaxConcurrentClients={Configuration.MaxConcurrentClients}");
                 
+            // Initialize the physical storage service first
+            var storageService = new PhysicalStorageService(Configuration.FileStoragePath, _logService);
+            
             // Initialize authentication components
             _userRepository = new UserRepository(Configuration.UsersDataPath, _logService);
             _authService = new AuthenticationService(_userRepository, _logService);
@@ -60,8 +67,8 @@ public class ServerEngine
             _clientSessionManager = new ClientSessionManager(_logService, Configuration);
 
             // Initialize state and command factories
-            _sessionStateFactory = new SessionStateFactory(_authService, _fileService, _logService);
-            _commandHandlerFactory = new CommandHandlerFactory(_authService, _fileService, _logService);
+            _sessionStateFactory = new SessionStateFactory(_authService, _fileService, _directoryService, _logService);
+            _commandHandlerFactory = new CommandHandlerFactory(_authService, _fileService, _directoryService, _logService);
 
             // Initialize TCP server
             _tcpServer = new TcpServer(Configuration.Port, _logService, _clientSessionManager, _commandHandlerFactory, _sessionStateFactory, Configuration);

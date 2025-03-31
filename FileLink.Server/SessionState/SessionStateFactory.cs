@@ -1,4 +1,5 @@
 using FileLink.Server.Authentication;
+using FileLink.Server.Disk.DirectoryManagement;
 using FileLink.Server.FileManagement;
 using FileLink.Server.Network;
 using FileLink.Server.Services.Logging;
@@ -11,13 +12,15 @@ namespace FileLink.Server.SessionState
     {
         private readonly AuthenticationService _authService;
         private readonly FileService _fileService;
+        private readonly DirectoryService _directoryService;
         private readonly LogService _logService;
         
         // Initializes a new instance of the SessionStateFactory
-        public SessionStateFactory(AuthenticationService authService, FileService fileService, LogService logService)
+        public SessionStateFactory(AuthenticationService authService, FileService fileService, DirectoryService directoryService, LogService logService)
         {
             _authService = authService ?? throw new ArgumentNullException(nameof(authService));
             _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
+            _directoryService = directoryService ?? throw new ArgumentNullException(nameof(directoryService));
             _logService = logService ?? throw new ArgumentNullException(nameof(logService));
         }
         
@@ -31,7 +34,7 @@ namespace FileLink.Server.SessionState
         public ISessionState CreateAuthenticatedState(ClientSession clientSession)
         {
             ArgumentNullException.ThrowIfNull(clientSession);
-            return new AuthenticatedState(clientSession, _fileService, _logService);
+            return new AuthenticatedState(clientSession, _fileService, _directoryService, _logService);
         }
 
         public ISessionState CreateTransferState(ClientSession clientSession, FileMetadata fileMetadata, bool isUploading)
