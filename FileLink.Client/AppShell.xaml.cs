@@ -1,11 +1,14 @@
-﻿using Microsoft.Maui.Controls;
-
-namespace FileLink.Client;
-
-public partial class AppShell : Shell
+﻿namespace FileLink.Client
 {
-    public AppShell()
+    public partial class AppShell : Shell
     {
-        InitializeComponent();
+        public AppShell()
+        {
+            InitializeComponent();
+
+            // Register routes for navigation'
+            Routing.RegisterRoute(nameof(Pages.LoginPage), typeof(Pages.LoginPage));
+            Routing.RegisterRoute(nameof(Pages.MainPage), typeof(Pages.MainPage));
+        }
     }
 }

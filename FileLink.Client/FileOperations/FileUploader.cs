@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 using FileLink.Client.Connection;
 using FileLink.Client.Protocol;
 using FileLink.Client.Session;
-
+//-------------------------------
+// WE ARE REMOVING THIS FILE
+//-------------------------------
 namespace FileLink.Client.FileOperations
 {
     // Handles file upload operations to the cloud file server.

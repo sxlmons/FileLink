@@ -1,0 +1,224 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:clientPrototype="clr-namespace:"
+             xmlns:client="clr-namespace:FileLink.Client"
+             xmlns:fileselector="clr-namespace:FileLink.Client.FileOperations"
+             xmlns:directoryNav="clr-namespace:FileLink.Client.DirectoryNavigation"
+             x:Class="FileLink.Client.Pages.MainPage"
+             
+             >
+   
+    <!-- We're using a 3-column layout:
+       - Column 0: Left navigation menu
+       - Column 1: Main content (Search, Categories, Recent Files)
+       - Column 2: Right-hand panel (Add New Files, Storage, Favourites)-->
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />  <!-- Side Nav -->
+            <ColumnDefinition Width="*" />    <!-- Main Content -->
+            <ColumnDefinition Width="270" />  <!-- Right Sidebar -->
+        </Grid.ColumnDefinitions>
+
+        <!-- ========== LEFT NAVIGATION ========== -->
+        
+        <Grid Grid.Column="0" 
+            BackgroundColor="#3B2D79"
+              RowDefinitions="Auto, *, Auto">
+            
+            <VerticalStackLayout Spacing="15" Grid.Row="0" Padding="20,0">
+                <!-- App Title / Logo -->
+                <Label 
+                    Text="CloudFile"
+                    FontAttributes="Bold"
+                    FontSize="28"
+                    TextColor="White"
+                    Margin="0,30,0,0"/>
+                
+                <!-- User Profile Section -->
+                <Frame BackgroundColor="#4C3B8A"
+                       CornerRadius="10"
+                       HasShadow="False"
+                       Padding="10"
+                       HorizontalOptions="Fill">
+                    <VerticalStackLayout>
+                        <!-- Avatar placeholder -->
+                        <Image Source="dotnet_bot.png" 
+                               HeightRequest="75" 
+                               WidthRequest="75"
+                               HorizontalOptions="Center"
+                               Aspect="AspectFit"/>
+                        <!-- Display logged-in username -->
+                        <Label 
+                            x:Name="UserInfoLabel"
+                            Text="Welcome Back!" 
+                            TextColor="White"
+                            HorizontalOptions="Center"
+                            FontSize="14"/>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Navigation Buttons -->
+                <VerticalStackLayout Spacing="10">
+                    <Button Text="My Cloud" 
+                            BackgroundColor="Transparent"
+                            TextColor="White"
+                            HorizontalOptions="Start" />
+
+                    <Button Text="Favourites" 
+                            BackgroundColor="Transparent"
+                            TextColor="White"
+                            HorizontalOptions="Start" />
+
+                    <Button Text="Upload Files" 
+                            BackgroundColor="Transparent"
+                            TextColor="White"
+                            HorizontalOptions="Start" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+            
+            <BoxView BackgroundColor="Transparent"
+                     Grid.Row="1"/>
+            
+            <VerticalStackLayout Grid.Row="2" Padding="20,20">
+                <!-- Bottom Navigation -->
+                <Button Text="Account" 
+                        BackgroundColor="Transparent"
+                        TextColor="White"
+                        HorizontalOptions="Start"/>
+
+                <Button Text="Settings" 
+                        BackgroundColor="Transparent"
+                        TextColor="White"
+                        HorizontalOptions="Start" />
+                
+                <!-- Logout Button -->
+                <Button 
+                    x:Name="LogoutButton"
+                    Text="Logout"
+                    BackgroundColor="#FF5252"
+                    TextColor="White"
+                    Clicked="LogoutButton_Clicked"
+                    HorizontalOptions="Start"
+                    Margin="0,20,0,0" />
+                
+                <!-- Status indicators for logout -->
+                <ActivityIndicator 
+                    x:Name="ActivitySpinner"
+                    IsRunning="false"
+                    IsVisible="false"
+                    HorizontalOptions="Center" 
+                    Color="White"/>
+                
+                <Label 
+                    x:Name="StatusLabel"
+                    Text=""
+                    TextColor="White"
+                    HorizontalOptions="Center"
+                    IsVisible="False" />
+            </VerticalStackLayout>
+        </Grid>
+        
+        <!-- ========== MAIN CONTENT AREA ========== -->
+        <ScrollView Grid.Column="1" Padding="20">
+            <VerticalStackLayout Spacing="20">
+
+                <!-- Search Bar -->
+                <SearchBar Placeholder="Search..."
+                           BackgroundColor="White"
+                           HeightRequest="40"/>
+                
+                <Grid ColumnDefinitions="Auto, *, Auto">
+                    
+                    <!-- Recent Files -->
+                    <Label Text="Directories"
+                           Grid.Column="0"
+                           FontSize="26"
+                           FontAttributes="Bold"
+                           TextColor="#333"/>
+                    
+                    <BoxView BackgroundColor="Transparent"
+                             Grid.Column="1"/>
+                    
+                    <Button Text="BACK"
+                            Grid.Column="2"
+                            IsVisible="False"/>
+                </Grid>
+
+                <!-- Placeholder for file/directory display -->
+                <Frame BorderColor="Gray" 
+                       BackgroundColor="#F9F9F9"
+                       CornerRadius="10"
+                       Padding="10"
+                       MinimumHeightRequest="400">
+                    <Label Text="No files or directories to display."
+                           VerticalOptions="Center"
+                           HorizontalOptions="Center"
+                           TextColor="#999" />
+                </Frame>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+
+        <!-- RIGHT SIDEBAR -->
+        <ScrollView Grid.Column="2" Padding="20">
+            <VerticalStackLayout Spacing="20">
+
+                <!-- Add New Files -->
+                <Frame Padding="20" CornerRadius="10" BackgroundColor="White">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Add New Files" 
+                               FontAttributes="Bold"
+                               FontSize="16"/>
+                        <Button Text="Upload" 
+                                BackgroundColor="#4C3B8A" 
+                                TextColor="White"/>
+                    </VerticalStackLayout>
+                    
+                </Frame>
+                
+                <Frame Padding="20" CornerRadius="10" BackgroundColor="White">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Queued Files" 
+                               FontAttributes="Bold"
+                               FontSize="16"
+                               VerticalTextAlignment="Center"/>
+                        
+                        <Label Text="No files queued" 
+                               TextColor="#999"
+                               FontSize="14"/>
+                        
+                        <Button Text="Send Files"
+                                IsVisible="False" />
+                        
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Storage Info -->
+                <Frame Padding="20" CornerRadius="10" BackgroundColor="White">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Your Storage"
+                               FontAttributes="Bold" 
+                               FontSize="16"/>
+                        <Label Text="-- GB used of -- GB" FontSize="12"/>
+                        <ProgressBar Progress="0" />
+                        <Label Text="Storage information not available"
+                               FontSize="12"
+                               HorizontalOptions="End"/>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Favourites -->
+                <Frame Padding="20" CornerRadius="10" BackgroundColor="White">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Favourites"
+                               FontAttributes="Bold"
+                               FontSize="16"/>
+                        <Label Text="No favourites yet" FontSize="12"/>
+                    </VerticalStackLayout>
+                </Frame>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

@@ -8,6 +8,9 @@ using FileLink.Client.FileOperations;
 using FileLink.Client.Protocol;
 using FileLink.Client.Session;
 
+//-------------------------------
+// WE ARE REMOVING THIS FILE
+//-------------------------------
 namespace FileLink.Client.FileOperations
 {
     // Handles file download operations from the cloud file server

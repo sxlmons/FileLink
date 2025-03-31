@@ -3,7 +3,9 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using FileLink.Client.Protocol;
-
+//-------------------------------
+// WE ARE REMOVING THIS FILE
+//-------------------------------
 namespace FileLink.Client.Connection
 {
     // Manages the TCP connection to the cloud file server.

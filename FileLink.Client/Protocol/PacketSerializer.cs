@@ -32,7 +32,7 @@ namespace FileLink.Client.Protocol
             {
                 using var ms = new MemoryStream();
                 using var writer = new BinaryWriter(ms);
-                RSA rsa = RSA.Create();
+                // RSA rsa = RSA.Create();
 
                 // Write protocol version
                 writer.Write(PROTOCOL_VERSION);
@@ -70,9 +70,9 @@ namespace FileLink.Client.Protocol
                 // Write payload
                 if (packet.Payload != null)
                 {
-                   packet.EncryptedPayload = EncryptPayload(packet.Payload, rsa); // Encrypting packet payload yo
+                   // packet.EncryptedPayload = EncryptPayload(packet.Payload, rsa); // Encrypting packet payload yo
                    writer.Write(packet.Payload.Length);
-                   writer.Write(packet.EncryptedPayload); // Writing the encrypted payload 
+                   writer.Write(packet.Payload); // Writing the encrypted payload 
                 }
                 else
                 {
@@ -120,7 +120,7 @@ namespace FileLink.Client.Protocol
             {
                 using var ms = new MemoryStream(data);
                 using var reader = new BinaryReader(ms);
-                RSA rsa = RSA.Create();
+                // RSA rsa = RSA.Create();
 
                 var packet = new Packet();
 
@@ -167,14 +167,14 @@ namespace FileLink.Client.Protocol
                 int payloadLength = reader.ReadInt32();
                 if (payloadLength > 0)
                 {
-
+                    packet.Payload = reader.ReadBytes(payloadLength);
+                    /*
                     if (packet.EncryptedPayload != null) // Decrypting packet payload 
                     {
                         packet.EncryptedPayload = DecryptPayload(packet.EncryptedPayload, rsa);
                         packet.EncryptedPayload = reader.ReadBytes(payloadLength); // reader?
-                        
                     }
-
+                    */
                 }
 
                 return packet;

@@ -1,9 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using FileLink.Client.Connection;
 using FileLink.Client.FileOperations;
+
+//-------------------------------
+// WE ARE REMOVING THIS FILE
+//-------------------------------
 
 namespace FileLink.Client.Session
 {

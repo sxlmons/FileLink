@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 using FileLink.Client.Connection;
 using FileLink.Client.Protocol;
 
+//-------------------------------
+// WE ARE REMOVING THIS FILE
+//-------------------------------
 namespace FileLink.Client.Session
 {
     
