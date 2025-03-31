@@ -3,6 +3,7 @@ using FileLink.Server.FileManagement;
 using FileLink.Server.Services.Logging;
 using FileLink.Server.Commands.Auth;
 using FileLink.Server.Commands.Directory;
+using FileLink.Server.Commands.File;
 using FileLink.Server.Disk.DirectoryManagement;
 
 namespace FileLink.Server.Commands 
@@ -44,13 +45,13 @@ namespace FileLink.Server.Commands
             RegisterHandler(new FileUploadCommandHandler(_fileService, _directoryService, _logService));
             RegisterHandler(new FileDownloadCommandHandler(_fileService, _logService));
             RegisterHandler(new FileDeleteCommandHandler(_fileService, _logService));
+            RegisterHandler(new FileMoveCommandHandler(_directoryService, _logService));
             
             // Directory operation handlers
             RegisterHandler(new DirectoryCreateCommandHandler(_directoryService, _logService));
             RegisterHandler(new DirectoryListCommandHandler(_directoryService, _logService));
             RegisterHandler(new DirectoryRenameCommandHandler(_directoryService, _logService));
             RegisterHandler(new DirectoryDeleteCommandHandler(_directoryService, _logService));
-            // RegisterHandler(new FileMoveCommandHandler(_directoryService, _logService));
             RegisterHandler(new DirectoryContentsCommandHandler(_directoryService, _logService));
         }
         
