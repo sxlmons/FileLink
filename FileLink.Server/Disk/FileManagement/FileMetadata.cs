@@ -56,6 +56,13 @@ namespace FileLink.Server.FileManagement;
                 IsComplete = true;
             }
         }
+        
+        public void MoveToDirectory(string directoryId, string newFilePath)
+        {
+            DirectoryId = directoryId;
+            FilePath = newFilePath;
+            UpdatedAt = DateTime.Now;
+        }
 
         // Marks the file as complete
         public void MarkComplete()

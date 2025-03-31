@@ -2,38 +2,35 @@ using FileLink.Server.Core.Exceptions;
 using FileLink.Server.Services.Logging;
 using System.Buffers;
 using FileLink.Server.Disk.FileManagement;
+using FileLink.Server.FileManagement;
 
-namespace FileLink.Server.FileManagement;
+namespace FileLink.Server.Disk.FileManagement;
 
 // Service that provides file management functionality
 // These methods will be used by the CommandHandler classes
 public class FileService
 {
     private readonly IFileRepository _fileRepository;
-    private readonly string _storagePath;
-    private readonly LogService _logService;
+    private readonly PhysicalStorageService _storageService;    private readonly LogService _logService;
     private readonly ArrayPool<byte> _bufferPool;
     
     // Gets the chunk size for file transfers
     public int ChunkSize { get; }
     
     // Initializes new instance of the FileService class
-    public FileService(IFileRepository fileRepository, string storagePath, LogService logService, int chunkSize = 1024 * 1024)
+    public FileService(IFileRepository fileRepository, PhysicalStorageService storageService, LogService logService, int chunkSize = 1024 * 1024)
     {
         _fileRepository = fileRepository ?? throw new ArgumentNullException(nameof(fileRepository));
-        _storagePath = storagePath ?? throw new ArgumentNullException(nameof(storagePath));
+        _storageService = storageService ?? throw new ArgumentNullException(nameof(storageService));
         _logService = logService  ?? throw new ArgumentNullException(nameof(logService));
         ChunkSize = chunkSize;
         
         // Initialize the buffer pool for efficient memory usage yo!
         _bufferPool = ArrayPool<byte>.Shared;
-        
-        // Ensure the storage directory exists
-        Directory.CreateDirectory(_storagePath);
     }
     
     // Initializes a file upload
-    public async Task<FileMetadata> InitializeFileUpload(string userId, string fileName, long fileSize, string contentType)
+    public async Task<FileMetadata> InitializeFileUpload(string userId, string fileName, long fileSize, string contentType, string directoryId = null)
     {
         try
         {
@@ -46,18 +43,35 @@ public class FileService
             if (fileSize <= 0)
                 throw new ArgumentException("File size must be greater than zero.", nameof(fileSize));
             
-            // Sanitize the file name 
+            // Sanitize the file name
             fileName = SanitizeFileName(fileName);
-            
-            // Create the user's directory if it doesn't exist 
-            string userDirectory = Path.Combine(_storagePath, userId);
-            Directory.CreateDirectory(userDirectory);
             
             // Generate a unique file ID
             string fileId = Guid.NewGuid().ToString();
-
-            // Generate a unique file path
-            string filePath = Path.Combine(userDirectory, fileId + "_" + fileName);
+            
+            // Generate the file path
+            string filePath;
+            
+            if (string.IsNullOrEmpty(directoryId))
+            {
+                // Store in user's root directory
+                filePath = _storageService.GetRootFilePath(userId, fileName, fileId);
+            }
+            else
+            {
+                // Lookup the directory's physical path
+                var directoryMetadata = await _fileRepository.GetDirectoryById(directoryId);
+                if (directoryMetadata == null || directoryMetadata.UserId != userId)
+                {
+                    throw new FileOperationException($"Directory {directoryId} not found or not owned by user {userId}");
+                }
+                
+                // Get the file path in this directory
+                filePath = _storageService.GetFilePathInDirectory(directoryMetadata.DirectoryPath, fileName, fileId);
+                
+                // Ensure the directory exists
+                _storageService.CreateDirectory(directoryMetadata.DirectoryPath);
+            }
             
             // Create file metadata
             var metadata = new FileMetadata(userId, fileName, fileSize, contentType, filePath)
@@ -67,94 +81,97 @@ public class FileService
                 IsComplete = false,
             };
             
+            // Create an empty file
+            if (!_storageService.CreateEmptyFile(filePath))
+            {
+                throw new FileOperationException($"Failed to create file at {filePath}");
+            }
+            
             // Add the metadata to the repository
             bool success = await _fileRepository.AddFileMetadataAsync(metadata);
-
+            
             if (!success)
             {
+                // Clean up the empty file
+                _storageService.DeleteFile(filePath);
                 throw new FileOperationException("Failed to initialize file upload.");
             }
             
-            // Create an empty file
-            await using (var fs = File.Create(filePath))
-            {
-                // No need to write until the chunking process
-            }
-            
-            _logService.Info($"File upload initialized: {fileName} (ID: {fileId}, Size: {fileSize}, User ID: {userId}).");
+            _logService.Info($"File upload initialized: {fileName} (ID: {fileId}, Size: {fileSize} bytes, User: {userId}, Directory: {directoryId ?? "root"}, Path: {filePath})");
             
             return metadata;
         }
-        catch(Exception ex) when (!(ex is FileOperationException))
+        catch (Exception ex) when (!(ex is FileOperationException))
         {
             _logService.Error($"Error initializing file upload: {ex.Message}", ex);
-            throw new FileOperationException($"Failed to initialize upload", ex);
+            throw new FileOperationException("Failed to initialize file upload.", ex);
         }
     }
-
-    // Processes a file chunk, the second step in the file upload process
-    public async Task<bool> ProcessFileChunk(string fileId, int chunkIndex, bool isLastChunk, byte[] chunkData)
-    {
-        if (string.IsNullOrEmpty(fileId))
-            throw new ArgumentException("File ID cannot be empty.", nameof(fileId));
-            
-        if (chunkIndex < 0)
-            throw new ArgumentException("Chunk index must be non-negative.", nameof(chunkIndex));
-            
-        if (chunkData == null || chunkData.Length == 0)
-            throw new ArgumentException("Chunk data cannot be empty.", nameof(chunkData));
-        try
+    
+    // Processes a file chunk for uploads
+     public async Task<bool> ProcessFileChunk(string fileId, int chunkIndex, bool isLastChunk, byte[] chunkData)
         {
-            // Get the file metadata 
-            var metadata = await _fileRepository.GetFileMetadataById(fileId);
-
-            if (metadata == null)
+            if (string.IsNullOrEmpty(fileId))
+                throw new ArgumentException("File ID cannot be empty.", nameof(fileId));
+            
+            if (chunkIndex < 0)
+                throw new ArgumentException("Chunk index must be non-negative.", nameof(chunkIndex));
+            
+            if (chunkData == null || chunkData.Length == 0)
+                throw new ArgumentException("Chunk data cannot be empty.", nameof(chunkData));
+            
+            try
             {
-                _logService.Warning($"File {fileId} does not exist.");
+                // Get the file metadata
+                var metadata = await _fileRepository.GetFileMetadataById(fileId);
+                
+                if (metadata == null)
+                {
+                    _logService.Warning($"Attempted to process chunk for non-existent file: {fileId}");
+                    return false;
+                }
+                
+                // Validate chunk index
+                if (chunkIndex != metadata.ChunksReceived)
+                {
+                    _logService.Warning($"Received out-of-order chunk {chunkIndex} for file {fileId}, expected {metadata.ChunksReceived}");
+                    return false;
+                }
+                
+                // Calculate the offset in the file
+                long offset = (long)chunkIndex * ChunkSize;
+                
+                // Write the chunk to the file using the storage service
+                bool writeSuccess = await _storageService.WriteFileChunk(metadata.FilePath, chunkData, offset);
+                if (!writeSuccess)
+                {
+                    _logService.Warning($"Failed to write chunk {chunkIndex} for file {fileId}");
+                    return false;
+                }
+                
+                // Update the metadata
+                metadata.AddChunk();
+                
+                // If this is the last chunk, mark the file as complete
+                if (isLastChunk)
+                {
+                    metadata.MarkComplete();
+                }
+                
+                // Update the metadata in the repository
+                await _fileRepository.UpdateFileMetadataAsync(metadata);
+                
+                _logService.Debug($"Processed chunk {chunkIndex} for file {fileId} (Size: {chunkData.Length} bytes)");
+                
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logService.Error($"Error processing file chunk: {ex.Message}", ex);
                 return false;
             }
-            
-            // Validate chunk index
-            if (chunkIndex != metadata.ChunksReceived)
-            {
-                _logService.Warning($"Received out-of-order chunk {chunkIndex} for file {fileId}, expected: {metadata.ChunksReceived}.");
-                return false;
-            }
-            
-            // Check if the file already exists 
-            if (!File.Exists(metadata.FilePath))
-            {
-                _logService.Warning($"File {fileId} does not exist at path {metadata.FilePath}.");
-            }
-            
-            // Calculate the offset in the file
-            long offset = (long)chunkIndex * ChunkSize;
-            
-            // Write the chunk to the file
-            await using (var fileStream = new FileStream(metadata.FilePath, FileMode.Open, FileAccess.Write, FileShare.None))
-            {
-                fileStream.Seek(offset, SeekOrigin.Begin);
-                await fileStream.WriteAsync(chunkData, 0, chunkData.Length);
-            }
-            
-            // Update the metadata
-            metadata.AddChunk();
-            
-            // If this is the last chunk, mark the file as complete
-            if (isLastChunk)
-                metadata.MarkComplete();
-            
-            // Update the metadata in the repository
-            await _fileRepository.UpdateFileMetadataAsync(metadata);
-            _logService.Debug($"Processed chunk {chunkIndex} for file {fileId} (Size: {chunkData.Length}).");
-            return true;
         }
-        catch (Exception ex)
-        {
-            _logService.Error($"Error while processing file {fileId}. {ex.Message}", ex);
-            return false;
-        }
-    }
+    
     
     // Finalizes a file upload
     public async Task<bool> FinalizeFileUpload(string fileId)
@@ -206,19 +223,183 @@ public class FileService
     // initialize file download
     public async Task<FileMetadata> InitializeFileDownload(string fileId, string userId)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrEmpty(fileId))
+            throw new ArgumentException("File ID cannot be empty.", nameof(fileId));
+        
+        if (string.IsNullOrEmpty(userId))
+            throw new ArgumentException("User ID cannot be empty.", nameof(userId));
+        
+        try
+        {
+            // Get the file metadata
+            var metadata = await _fileRepository.GetFileMetadataById(fileId);
+            
+            if (metadata == null)
+            {
+                _logService.Warning($"Attempted to download non-existent file: {fileId}");
+                return null;
+            }
+            
+            // Check if the user owns the file
+            if (!await ValidateUserOwnership(fileId, userId))
+            {
+                _logService.Warning($"User {userId} attempted to download file {fileId} owned by {metadata.UserId}");
+                return null;
+            }
+            
+            // Check if the file is complete
+            if (!metadata.IsComplete)
+            {
+                _logService.Warning($"Attempted to download incomplete file: {fileId}");
+                return null;
+            }
+            
+            // Check if the file exists
+            if (!File.Exists(metadata.FilePath))
+            {
+                _logService.Warning($"File not found at {metadata.FilePath} for file {fileId}");
+                return null;
+            }
+            
+            _logService.Info($"File download initialized: {metadata.FileName} (ID: {fileId}, Size: {metadata.FileSize} bytes, User: {userId})");
+            
+            return metadata;
+        }
+        catch (Exception ex)
+        {
+            _logService.Error($"Error initializing file download: {ex.Message}", ex);
+            throw new FileOperationException("Failed to initialize file download.", ex);
+        }
     }
     
     // get a file chunk
     public async Task<(byte[] data, bool isLastChunk)> GetFileChunk(string fileId, int chunkIndex)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrEmpty(fileId))
+            throw new ArgumentException("File ID cannot be empty.", nameof(fileId));
+        
+        if (chunkIndex < 0)
+            throw new ArgumentException("Chunk index must be non-negative.", nameof(chunkIndex));
+        
+        try
+        {
+            // Get the file metadata
+            var metadata = await _fileRepository.GetFileMetadataById(fileId);
+            
+            if (metadata == null)
+            {
+                _logService.Warning($"Attempted to get chunk for non-existent file: {fileId}");
+                return (null, false);
+            }
+            
+            // Check if the file exists
+            if (!File.Exists(metadata.FilePath))
+            {
+                _logService.Warning($"File not found at {metadata.FilePath} for file {fileId}");
+                return (null, false);
+            }
+            
+            // Calculate the offset in the file
+            long offset = (long)chunkIndex * ChunkSize;
+            
+            // Check if this is the last chunk
+            int totalChunks = CalculateTotalChunks(metadata.FileSize);
+            bool isLastChunk = chunkIndex == totalChunks - 1;
+            
+            // Calculate the chunk size (the last chunk may be smaller)
+            int actualChunkSize = isLastChunk
+                ? (int)(metadata.FileSize - offset)
+                : ChunkSize;
+            
+            // Check if the offset is valid
+            if (offset >= metadata.FileSize)
+            {
+                _logService.Warning($"Invalid chunk index {chunkIndex} for file {fileId} (Size: {metadata.FileSize}, Offset: {offset})");
+                return (null, false);
+            }
+            
+            // Read the chunk from the file
+            byte[] buffer = _bufferPool.Rent(actualChunkSize);
+            
+            try
+            {
+                using (var fileStream = new FileStream(metadata.FilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    fileStream.Seek(offset, SeekOrigin.Begin);
+                    int bytesRead = await fileStream.ReadAsync(buffer, 0, actualChunkSize);
+                    
+                    if (bytesRead != actualChunkSize)
+                    {
+                        _logService.Warning($"Expected to read {actualChunkSize} bytes, but read {bytesRead} bytes for file {fileId}");
+                    }
+                    
+                    // Copy the data to a new array of the exact size
+                    byte[] data = new byte[bytesRead];
+                    Array.Copy(buffer, data, bytesRead);
+                    
+                    _logService.Debug($"Read chunk {chunkIndex} for file {fileId} (Size: {bytesRead} bytes, IsLastChunk: {isLastChunk})");
+                    
+                    return (data, isLastChunk);
+                }
+            }
+            finally
+            {
+                // Return the buffer to the pool
+                _bufferPool.Return(buffer);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logService.Error($"Error getting file chunk: {ex.Message}", ex);
+            return (null, false);
+        }
     }
     
     // deletes a file
     public async Task<bool> DeleteFile(string fileId, string userId)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrEmpty(fileId))
+            throw new ArgumentException("File ID cannot be empty.", nameof(fileId));
+    
+        if (string.IsNullOrEmpty(userId))
+            throw new ArgumentException("User ID cannot be empty.", nameof(userId));
+    
+        try
+        {
+            // Get the file metadata
+            var metadata = await _fileRepository.GetFileMetadataById(fileId);
+        
+            if (metadata == null)
+            {
+                _logService.Warning($"Attempted to delete non-existent file: {fileId}");
+                return false;
+            }
+        
+            // Check if the user owns the file
+            if (metadata.UserId != userId)
+            {
+                _logService.Warning($"User {userId} attempted to delete file {fileId} owned by {metadata.UserId}");
+                return false;
+            }
+        
+            // Delete the file using the storage service
+            _storageService.DeleteFile(metadata.FilePath);
+        
+            // Delete the metadata
+            bool success = await _fileRepository.DeleteFileMetadataAsync(fileId);
+        
+            if (success)
+            {
+                _logService.Info($"File deleted: {metadata.FileName} (ID: {fileId}, User: {userId})");
+            }
+        
+            return success;
+        }
+        catch (Exception ex)
+        {
+            _logService.Error($"Error deleting file: {ex.Message}", ex);
+            return false;
+        }
     }
     
     // gets a list of all files

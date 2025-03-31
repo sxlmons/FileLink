@@ -158,9 +158,36 @@ public class DirectoryRepository : IDirectoryRepository
         return true;
     }
 
-    public Task<bool> DeleteDirectoryMetadata(string directoryId)
+    public async Task<bool> DeleteDirectoryMetadata(string directoryId)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrEmpty(directoryId))
+            throw new ArgumentException("Directory ID cannot be empty.", nameof(directoryId));
+
+        DirectoryMetadata metadata;
+        lock (_lock)
+        {
+            if (!_metadata.TryGetValue(directoryId, out metadata))
+            {
+                _logService.Warning($"Attempted to delete non-existent directory metadata: {directoryId}");
+                return false;
+            }
+
+            // Check if there are subdirectories
+            bool hasSubdirectories = _metadata.Values.Any(d => d.ParentDirectoryId == directoryId);
+            if (hasSubdirectories)
+            {
+                _logService.Warning($"Cannot delete directory {directoryId} because it has subdirectories.");
+                return false;
+            }
+
+            _metadata.Remove(directoryId);
+        }
+
+        // Save changes to storage
+        await SaveMetadata();
+            
+        _logService.Info($"Directory metadata deleted: {metadata.Name} (ID: {directoryId})");
+        return true;
     }
 
     // Checks if a directory exists with the given name and parent
