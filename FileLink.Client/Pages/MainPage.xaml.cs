@@ -1,5 +1,6 @@
 ﻿using FileLink.Client.FileOperations;
 using FileLink.Client.Services;
+using FileLink.Client.Session;
 
 namespace FileLink.Client.Pages;
 
@@ -14,8 +15,11 @@ public partial class MainPage : ContentPage
         _authService = authService;
         
         // Creates an instance to manage the file stack when uploading files 
-       // BindingContext = new MainViewModel();
+        BindingContext = new MainViewModel();
     }
+    
+    
+    
     protected override void OnAppearing()
     {
         base.OnAppearing();
@@ -77,7 +81,7 @@ public partial class MainPage : ContentPage
 }
 
 
-/* This is campbell's code
+// This is campbell's code
 // This is used to have all of our view models viewable as data contexts 
 public class MainViewModel
 {
@@ -89,6 +93,6 @@ public class MainViewModel
     {
         FileVM = new FileSelector(_session);
     }
-    }
-    */
+}
+    
 

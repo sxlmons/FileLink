@@ -6,7 +6,7 @@
         {
             InitializeComponent();
 
-            // Register routes for navigation'
+            // Register routes for navigation
             Routing.RegisterRoute(nameof(Pages.LoginPage), typeof(Pages.LoginPage));
             Routing.RegisterRoute(nameof(Pages.MainPage), typeof(Pages.MainPage));
         }

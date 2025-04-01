@@ -5,9 +5,8 @@
              xmlns:client="clr-namespace:FileLink.Client"
              xmlns:fileselector="clr-namespace:FileLink.Client.FileOperations"
              xmlns:directoryNav="clr-namespace:FileLink.Client.DirectoryNavigation"
-             x:Class="FileLink.Client.Pages.MainPage"
-             
-             >
+             Shell.NavBarIsVisible="False"
+             x:Class="FileLink.Client.Pages.MainPage">
    
     <!-- We're using a 3-column layout:
        - Column 0: Left navigation menu
@@ -29,7 +28,7 @@
             <VerticalStackLayout Spacing="15" Grid.Row="0" Padding="20,0">
                 <!-- App Title / Logo -->
                 <Label 
-                    Text="CloudFile"
+                    Text="FileLink"
                     FontAttributes="Bold"
                     FontSize="28"
                     TextColor="White"
@@ -127,7 +126,94 @@
                 <SearchBar Placeholder="Search..."
                            BackgroundColor="White"
                            HeightRequest="40"/>
+                           
+                <!--
                 
+                <Label Text="Categories"
+                       FontAttributes="Bold"
+                       FontSize="16"
+                       TextColor="#333"/>
+                
+                <HorizontalStackLayout Spacing="10">
+                    <Frame CornerRadius="6"
+                           WidthRequest="120"
+                           HeightRequest="110"
+                           BackgroundColor="#7B6FBE"
+                           Padding="10">
+                        <VerticalStackLayout>
+                            <Label Text="Documents" 
+                                   TextColor="#E8F0FF"
+                                   FontAttributes="Bold"
+                                   FontSize="14"/>
+                            <Label Text="456 Files" 
+                                   TextColor="#E8F0FF"
+                                   FontSize="12"/>
+                        </VerticalStackLayout>
+                    </Frame>
+
+                    <Frame CornerRadius="6"
+                           WidthRequest="120"
+                           HeightRequest="110"
+                           BackgroundColor="#BE6F6F"
+                           Padding="10">
+                        <VerticalStackLayout>
+                            <Label Text="Pictures" 
+                                   TextColor="#E8F0FF"
+                                   FontAttributes="Bold"
+                                   FontSize="14"/>
+                            <Label Text="201 Files" 
+                                   TextColor="#E8F0FF"
+                                   FontSize="12"/>
+                        </VerticalStackLayout>
+                    </Frame>
+
+                    <Frame CornerRadius="6"
+                           WidthRequest="120"
+                           HeightRequest="110"
+                           BackgroundColor="#6FB6BE"
+                           Padding="10">
+                        <VerticalStackLayout>
+                            <Label Text="Videos" 
+                                   TextColor="#E8F0FF"
+                                   FontAttributes="Bold"
+                                   FontSize="14"/>
+                            <Label Text="34 Files"
+                                   TextColor="#E8F0FF"
+                                   FontSize="12"/>
+                        </VerticalStackLayout>
+                    </Frame>
+
+                    <Frame CornerRadius="6"
+                           WidthRequest="120"
+                           HeightRequest="110"
+                           BackgroundColor="#BEAC6F"
+                           Padding="10">
+                        <VerticalStackLayout>
+                            <Label Text="School" 
+                                   TextColor="#E8F0FF"
+                                   FontAttributes="Bold"
+                                   FontSize="14"/>
+                            <Label Text="375 Files"
+                                   TextColor="#E8F0FF"
+                                   FontSize="12"/>
+                        </VerticalStackLayout>
+                    </Frame>
+                    
+                    <Frame CornerRadius="6"
+                           WidthRequest="120"
+                           HeightRequest="110"
+                           BackgroundColor="#E8F0FF"
+                           Padding="10">
+                        <VerticalStackLayout>
+                            <Label Text="Add New Category"
+                                   TextColor="#4C3B8A"
+                                   FontAttributes="Bold"
+                                   FontSize="14"/>
+                            <Label/>
+                        </VerticalStackLayout>
+                    </Frame>
+                </HorizontalStackLayout>
+                -->
                 <Grid ColumnDefinitions="Auto, *, Auto">
                     
                     <!-- Recent Files -->
@@ -141,21 +227,58 @@
                              Grid.Column="1"/>
                     
                     <Button Text="BACK"
+                            
+                            Command="{Binding DirectoryVM.backButtonCommand}"
+                            IsVisible="{Binding DirectoryVM.IsButtonVisible}"
                             Grid.Column="2"
-                            IsVisible="False"/>
+                            />
                 </Grid>
-
-                <!-- Placeholder for file/directory display -->
-                <Frame BorderColor="Gray" 
-                       BackgroundColor="#F9F9F9"
-                       CornerRadius="10"
-                       Padding="10"
-                       MinimumHeightRequest="400">
-                    <Label Text="No files or directories to display."
-                           VerticalOptions="Center"
-                           HorizontalOptions="Center"
-                           TextColor="#999" />
-                </Frame>
+                <!-- 
+                    Use a CollectionView or ListView for a scrollable list of "recent files". 
+                    For brevity, here’s a simple CollectionView with static items. 
+                -->
+                <!-- CollectionView of Recent Files -->
+                <CollectionView ItemsSource="{Binding DirectoryVM.Files}"
+                                Margin="5"
+                                VerticalScrollBarVisibility="Always">
+    
+                    <!-- Ensure items are wrapped in columns -->
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Horizontal"
+                                         HorizontalItemSpacing="5"
+                                         VerticalItemSpacing="5"/>
+                    </CollectionView.ItemsLayout>
+    
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="{x:Type directoryNav:ShownFiles}">
+                            
+                                
+                                <VerticalStackLayout HorizontalOptions="Center"
+                                                     VerticalOptions="Center"
+                                                     >
+                                    <!-- Image (file/folder) -->
+                                    <Image Source="{Binding pngType}"
+                                           WidthRequest="125"
+                                           HeightRequest="125"
+                                           Aspect="AspectFit">
+                                        <Image.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DirectoryVM.clickDirectoryCommand}"
+                                                                  CommandParameter="{Binding .}">
+                                            </TapGestureRecognizer>
+                                        </Image.GestureRecognizers>
+                                    </Image>
+                                    <!-- File Name -->
+                                    <Label Text="{Binding fileName}" 
+                                           TextColor="Black"
+                                           FontAttributes="Bold"
+                                           FontSize="16"
+                                           HorizontalTextAlignment="Center"
+                                           LineBreakMode="TailTruncation"/>
+                                    
+                                </VerticalStackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
 
             </VerticalStackLayout>
         </ScrollView>
@@ -173,24 +296,55 @@
                                FontSize="16"/>
                         <Button Text="Upload" 
                                 BackgroundColor="#4C3B8A" 
-                                TextColor="White"/>
+                                TextColor="White"
+                                Command="{Binding FileVM.AddFilesCommand}"/>
                     </VerticalStackLayout>
                     
                 </Frame>
                 
                 <Frame Padding="20" CornerRadius="10" BackgroundColor="White">
                     <VerticalStackLayout Spacing="10">
-                        <Label Text="Queued Files" 
-                               FontAttributes="Bold"
-                               FontSize="16"
-                               VerticalTextAlignment="Center"/>
-                        
-                        <Label Text="No files queued" 
-                               TextColor="#999"
-                               FontSize="14"/>
-                        
+                            <Label Text="Queued Files" 
+                                   FontAttributes="Bold"
+                                   FontSize="16"
+                                   VerticalTextAlignment="Center"/>
+                            
+                        <CollectionView ItemsSource="{Binding FileVM.Files}">
+                            <!-- 
+                            This will show text saying that the user hasnt committed any files yet 
+                            Right now it glitches the UI so will come back to it 
+                            <CollectionView.EmptyView>
+                                <Label Text="No Files"></Label>
+                            </CollectionView.EmptyView>
+                            -->
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="{x:Type fileselector:FilesSelected}">
+                                    <Grid ColumnDefinitions="*, Auto">
+                                        
+                                            
+                                            <Label Text="{Binding fileName}" 
+                                                   VerticalOptions="Center"
+                                                   Grid.Column="0"/> 
+                                        
+                                            <Button Text="X"
+                                                    Style="{x:Null}"
+                                                    BackgroundColor="Transparent"
+                                                    TextColor="Black"
+                                                    BorderWidth="0"
+                                                    CornerRadius="0"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.FileVM.RemoveFilesCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Grid.Column="1"/>
+                                        
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                        <!-- Command="{Binding Function for sending files} -->
                         <Button Text="Send Files"
-                                IsVisible="False" />
+                                Command="{Binding FileVM.SendFilesCommand}"
+                                IsVisible="{Binding FileVM.IsButtonVisible}"
+                                ></Button>
                         
                     </VerticalStackLayout>
                 </Frame>
@@ -215,7 +369,9 @@
                         <Label Text="Favourites"
                                FontAttributes="Bold"
                                FontSize="16"/>
-                        <Label Text="No favourites yet" FontSize="12"/>
+                        <!-- Just a couple static placeholders -->
+                        <Label Text="May_26th_Photo (JPEG)" FontSize="12"/>
+                        <Label Text="School_Project (Word Doc)" FontSize="12"/>
                     </VerticalStackLayout>
                 </Frame>
             </VerticalStackLayout>

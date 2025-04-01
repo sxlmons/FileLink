@@ -82,7 +82,7 @@ namespace FileLink.Client.Pages
 
         private void CancelButton_Clicked(object sender, EventArgs e)
         {
-            // Switch back to login panel
+            // Switch back to  panel
             LoginPanel.IsVisible = true;
             CreateAccountPanel.IsVisible = false;
         }
@@ -119,7 +119,7 @@ namespace FileLink.Client.Pages
                     // Account created successfully
                     await DisplayAlert("Success", "Your account has been created successfully", "OK");
                     
-                    // Switch back to login panel
+                    // Switch back to  panel
                     LoginPanel.IsVisible = true;
                     CreateAccountPanel.IsVisible = false;
                     
