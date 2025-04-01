@@ -11,7 +11,8 @@ namespace FileLink.Server.Disk.FileManagement;
 public class FileService
 {
     private readonly IFileRepository _fileRepository;
-    private readonly PhysicalStorageService _storageService;    private readonly LogService _logService;
+    private readonly PhysicalStorageService _storageService;    
+    private readonly LogService _logService;
     private readonly ArrayPool<byte> _bufferPool;
     
     // Gets the chunk size for file transfers
@@ -79,6 +80,7 @@ public class FileService
                 TotalChunks = CalculateTotalChunks(fileSize),
                 ChunksReceived = 0,
                 IsComplete = false,
+                DirectoryId = directoryId
             };
             
             // Create an empty file
@@ -492,4 +494,115 @@ public class FileService
             return false;
         }
     }
+    
+    // FUTURE IMPLEMENTATION: Moving files between directories
+     public async Task<bool> MoveFileToDirectory(string fileId, string targetDirectoryId, string userId)
+        {
+            if (string.IsNullOrEmpty(fileId))
+                throw new ArgumentException("File ID cannot be empty.", nameof(fileId));
+                
+            if (string.IsNullOrEmpty(userId))
+                throw new ArgumentException("User ID cannot be empty.", nameof(userId));
+            
+            try
+            {
+                // Get the file metadata
+                var fileMetadata = await _fileRepository.GetFileMetadataById(fileId);
+                if (fileMetadata == null)
+                {
+                    _logService.Warning($"File not found: {fileId}");
+                    return false;
+                }
+                
+                // Check if the user owns the file
+                if (fileMetadata.UserId != userId)
+                {
+                    _logService.Warning($"User {userId} attempted to move file owned by {fileMetadata.UserId}");
+                    return false;
+                }
+                
+                // If the file is already in the target directory, nothing to do
+                if ((targetDirectoryId == null && fileMetadata.DirectoryId == null) ||
+                    (fileMetadata.DirectoryId == targetDirectoryId))
+                {
+                    _logService.Debug($"File {fileId} is already in the specified directory");
+                    return true;
+                }
+                
+                // Determine the target directory path
+                string targetPath;
+                if (string.IsNullOrEmpty(targetDirectoryId))
+                {
+                    // Target is root directory
+                    targetPath = _storageService.GetUserDirectory(userId);
+                }
+                else
+                {
+                    // Target is a specific directory
+                    var targetDir = await _fileRepository.GetDirectoryById(targetDirectoryId);
+                    if (targetDir == null || targetDir.UserId != userId)
+                    {
+                        _logService.Warning($"Target directory not found or not owned by user: {targetDirectoryId}");
+                        return false;
+                    }
+                    
+                    targetPath = targetDir.DirectoryPath;
+                }
+                
+                // Get just the filename part of the current path
+                string fileName = Path.GetFileName(fileMetadata.FilePath);
+                string newFilePath = Path.Combine(targetPath, fileName);
+                
+                // If a file with the same name already exists in the target, create a unique name
+                if (new FileInfo(newFilePath).Exists && newFilePath != fileMetadata.FilePath)
+                {
+                    string fileNameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
+                    string extension = Path.GetExtension(fileName);
+                    string uniqueName = $"{fileNameWithoutExt}_{DateTime.Now:yyyyMMddHHmmss}{extension}";
+                    newFilePath = Path.Combine(targetPath, uniqueName);
+                }
+                
+                // Move the physical file using the storage service
+                bool moveSuccess = _storageService.MoveFile(fileMetadata.FilePath, newFilePath);
+                if (!moveSuccess && new FileInfo(fileMetadata.FilePath).Exists)
+                {
+                    _logService.Warning($"Failed to move file from {fileMetadata.FilePath} to {newFilePath}");
+                    return false;
+                }
+                
+                // Update the file metadata
+                string oldDirectoryId = fileMetadata.DirectoryId;
+                string oldFilePath = fileMetadata.FilePath;
+                
+                fileMetadata.DirectoryId = targetDirectoryId;
+                fileMetadata.FilePath = newFilePath;
+                fileMetadata.UpdatedAt = DateTime.Now;
+                
+                // Update the metadata in the repository
+                bool success = await _fileRepository.UpdateFileMetadataAsync(fileMetadata);
+                
+                if (success)
+                {
+                    _logService.Info($"File moved: {fileId} from directory {oldDirectoryId ?? "root"} to {targetDirectoryId ?? "root"}, path updated from {oldFilePath} to {newFilePath}");
+                    return true;
+                }
+                else
+                {
+                    _logService.Error($"Failed to update metadata for file {fileId} after moving");
+                    
+                    // Try to move the file back if we moved it
+                    if (new FileInfo(newFilePath).Exists && oldFilePath != newFilePath)
+                    {
+                        _storageService.MoveFile(newFilePath, oldFilePath);
+                    }
+                    
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logService.Error($"Error moving file to directory: {ex.Message}", ex);
+                return false;
+            }
+        }
 }
