@@ -2,13 +2,14 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using FileLink.Client.Session;
+using FileLink.Client.Services;
 
 namespace FileLink.Client.FileOperations;
 
 public class FileSelector : INotifyPropertyChanged
 {
-    private readonly CloudSession _session;
+    private readonly FileService _fileService;
+    private readonly AuthenticationService _authService;
     private readonly CancellationTokenSource _cts;
     
     public event PropertyChangedEventHandler PropertyChanged;
@@ -32,10 +33,12 @@ public class FileSelector : INotifyPropertyChanged
     public ICommand RemoveFilesCommand { get; }
     public ICommand SendFilesCommand { get; }
     
-    public FileSelector(CloudSession session)
+    public FileSelector(FileService fileService, AuthenticationService authService)
     {
-        _session = session ?? throw new ArgumentNullException(nameof(session));
+        _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
+        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         _cts = new CancellationTokenSource();
+        
         AddFilesCommand = new Command(async () => await AddFile());
         RemoveFilesCommand = new Command<FilesSelected>(RemoveFile);
         SendFilesCommand = new Command(async () => await SendFiles());
@@ -72,11 +75,33 @@ public class FileSelector : INotifyPropertyChanged
     
     public async Task SendFiles()
     {
+        // Verify authentication
+        if (!_authService.IsLoggedIn)
+        {
+            Console.WriteLine("Error Sending File: Not authenticated. Please log in first.");
+            return;
+        }
+
+        string userId = _authService.CurrentUser?.Id;
+        if (string.IsNullOrEmpty(userId))
+        {
+            Console.WriteLine("Error Sending File: User ID is missing.");
+            return;
+        }
+        
         foreach (var file in Files)
         {
             try
             {
-                await _session.FileManager.UploadFileAsync(file.fullPath);
+                var result = await _fileService.UploadFileAsync(file.fullPath, null, userId);
+                if (result != null)
+                {
+                    Console.WriteLine($"File uploaded successfully: {file.fileName}");
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to upload file: {file.fileName}");
+                }
             }
             catch(Exception ex)
             {

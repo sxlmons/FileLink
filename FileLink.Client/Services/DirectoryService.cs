@@ -201,4 +201,31 @@ namespace FileLink.Client.Services
             public string Message { get; set; } = "";
         }
     }
+    
+    // Extension methods for DirectoryService
+    public static class DirectoryServiceExtensions
+    {
+        // Get a specific directory by ID
+        public static async Task<DirectoryItem> GetDirectoryByIdAsync(this DirectoryService service,
+            string directoryId, string userId)
+        {
+            if (string.IsNullOrEmpty(directoryId) || string.IsNullOrEmpty(userId))
+                return null;
+
+            try
+            {
+                // Get all directories first
+                var (_, directories) = await service.GetDirectoryContentsAsync(null, userId);
+
+                // Find specific directory - this is inefficient but works until 
+                // a proper GetDirectoryById endpoint is added to DirectoryService
+                return directories.FirstOrDefault(d => d.Id == directoryId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting directory by ID: {ex.Message}");
+                return null;
+            }
+        }
+    }
 }
