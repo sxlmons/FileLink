@@ -67,11 +67,39 @@ namespace FileLink.Client.Protocol
                 }
 
                 // Write payload
-                if (packet.Payload != null)
+                if (packet.Payload != null &&  packet.Payload.Length > 0)
                 {
-                   packet.EncryptedPayload = EncryptPayload(packet.Payload); // Encrypting packet payload yo
-                   writer.Write(packet.EncryptedPayload.Length);
-                   writer.Write(packet.EncryptedPayload); // Writing the encrypted payload 
+                    // Add packet type differentiator 
+
+                    if (packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_CHUNK_REQUEST || packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_CHUNK_RESPONSE || 
+                        packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_CHUNK_REQUEST || packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_CHUNK_RESPONSE ||
+                        packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_INIT_REQUEST || packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_INIT_RESPONSE || 
+                        packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_INIT_REQUEST || packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_INIT_RESPONSE) 
+                    {
+                        
+                        packet.EncryptedPayload = EncryptPayload(packet.Payload); // Encrypting packet payload yo
+                        writer.Write(packet.EncryptedPayload.Length);
+                        writer.Write(packet.EncryptedPayload); // Writing the encrypted payload 
+                        
+                    }
+                    else if(packet.CommandCode == Commands.CommandCode.LOGIN_REQUEST || packet.CommandCode == Commands.CommandCode.LOGIN_RESPONSE ||
+                            packet.CommandCode == Commands.CommandCode.LOGOUT_RESPONSE || packet.CommandCode == Commands.CommandCode.LOGOUT_REQUEST ||
+                            packet.CommandCode == Commands.CommandCode.FILE_LIST_RESPONSE || packet.CommandCode == Commands.CommandCode.FILE_LIST_REQUEST ||
+                            packet.CommandCode == Commands.CommandCode.FILE_DELETE_RESPONSE || packet.CommandCode == Commands.CommandCode.FILE_DELETE_REQUEST || 
+                            packet.CommandCode == Commands.CommandCode.CREATE_ACCOUNT_REQUEST || packet.CommandCode == Commands.CommandCode.CREATE_ACCOUNT_RESPONSE ||
+                            packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_COMPLETE_REQUEST || packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_COMPLETE_RESPONSE ||
+                            packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_COMPLETE_RESPONSE || packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_COMPLETE_REQUEST ||
+                            packet.CommandCode == Commands.CommandCode.ERROR || packet.CommandCode == Commands.CommandCode.SUCCESS)
+                    {
+                        writer.Write(packet.Payload.Length);
+                        writer.Write(packet.Payload);
+                        
+                    }
+                    else
+                    {
+                        writer.Write(0);
+                    }
+
                 }
                 else
                 {
@@ -164,12 +192,26 @@ namespace FileLink.Client.Protocol
                 int payloadLength = reader.ReadInt32();
                 if (payloadLength > 0)
                 {
-
-                    if (packet.EncryptedPayload != null) // Decrypting packet payload 
-                    {
-                        packet.EncryptedPayload = reader.ReadBytes(payloadLength); // reader?
-                        packet.EncryptedPayload = DecryptPayload(packet.EncryptedPayload);
+                    bool encryptedCommands =
+                        packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_CHUNK_REQUEST ||
+                        packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_CHUNK_RESPONSE ||
+                        packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_CHUNK_REQUEST ||
+                        packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_CHUNK_RESPONSE ||
+                        packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_INIT_REQUEST ||
+                        packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_INIT_RESPONSE ||
+                        packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_INIT_REQUEST ||
+                        packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_INIT_RESPONSE;
+                    
+                    byte[] tempData = reader.ReadBytes(payloadLength);
+                    
+                    if (encryptedCommands) // Decrypting packet payload 
+                    { 
+                        packet.EncryptedPayload = tempData;
+                        packet.Payload = DecryptPayload(tempData);
                         
+                    } else
+                    {
+                        packet.Payload = tempData; // if the packet is never encrypted to begin with, it will be stored in packet.Payload
                     }
 
                 }
