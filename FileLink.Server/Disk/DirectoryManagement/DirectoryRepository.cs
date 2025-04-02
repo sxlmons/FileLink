@@ -1,7 +1,7 @@
 using System.Text.Json;
 using FileLink.Server.Core.Exceptions;
-using FileLink.Server.Disk.DirectoryManagement;
 using FileLink.Server.Services.Logging;
+
 
 namespace FileLink.Server.Disk.DirectoryManagement;
 
@@ -11,6 +11,7 @@ public class DirectoryRepository : IDirectoryRepository
     private readonly object _lock = new object();
     private Dictionary<string, DirectoryMetadata> _metadata = new Dictionary<string, DirectoryMetadata>();
     private readonly LogService _logService;
+    private bool _isInitialized = false;
     
     // Initializes a new instance of the DirectoryRepository class
     public DirectoryRepository(string metadataPath, LogService logService)
@@ -22,7 +23,118 @@ public class DirectoryRepository : IDirectoryRepository
         Directory.CreateDirectory(_metadataPath);
             
         // Load metadata from storage
-        LoadMetadata().Wait();
+        InitializeRepository().Wait();
+    }
+    
+    // Initialize the repository, migrating data if necessary
+    private async Task InitializeRepository()
+    {
+        if (_isInitialized)
+            return;
+        
+        try
+        {
+            string legacyFilePath = Path.Combine(_metadataPath, "directories.json");
+            
+            // Check if we need to migrate from the legacy format
+            if (File.Exists(legacyFilePath))
+            {
+                _logService.Info("Legacy directory metadata file found. Migrating to per-user storage format...");
+                await MigrateFromLegacyFormat(legacyFilePath);
+            }
+            else
+            {
+                // No legacy data, just load user-specific metadata
+                await LoadAllUserMetadata();
+            }
+            
+            _isInitialized = true;
+        }
+        catch (Exception ex)
+        {
+            _logService.Error($"Error initializing directory repository: {ex.Message}", ex);
+            // If we can't initialize, start with an empty dictionary
+            lock (_lock)
+            {
+                _metadata = new Dictionary<string, DirectoryMetadata>();
+            }
+        }
+    }
+    
+    // Migrate from the legacy single-file format to per-user files
+    private async Task MigrateFromLegacyFormat(string legacyFilePath)
+    {
+        try
+        {
+            // Read the legacy file
+            string json = await File.ReadAllTextAsync(legacyFilePath);
+            
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                _logService.Warning("Legacy directory metadata file is empty.");
+                return;
+            }
+            
+            // Deserialize from JSON
+            var metadataList = JsonSerializer.Deserialize<List<DirectoryMetadata>>(json);
+            
+            if (metadataList == null || metadataList.Count == 0)
+            {
+                _logService.Warning("No directory metadata found in legacy file.");
+                return;
+            }
+            
+            // Group metadata by user ID
+            var userGroups = metadataList.GroupBy(m => m.UserId).ToList();
+            
+            // Create user-specific files
+            foreach (var group in userGroups)
+            {
+                string userId = group.Key;
+                if (string.IsNullOrEmpty(userId))
+                    continue;
+                
+                // Get user-specific path
+                string userMetadataDirectory = GetUserMetadataDirectory(userId);
+                Directory.CreateDirectory(userMetadataDirectory);
+                
+                string userFilePath = Path.Combine(userMetadataDirectory, "directories.json");
+                
+                // Serialize and write user-specific metadata
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                };
+                
+                string userJson = JsonSerializer.Serialize(group.ToList(), options);
+                await File.WriteAllTextAsync(userFilePath, userJson);
+                
+                // Add to in-memory metadata
+                foreach (var metadata in group)
+                {
+                    if (!string.IsNullOrEmpty(metadata.Id))
+                    {
+                        _metadata[metadata.Id] = metadata;
+                    }
+                }
+                
+                _logService.Info($"Migrated {group.Count()} directory metadata records for user {userId}");
+            }
+            
+            // Create backup of legacy file
+            string backupPath = legacyFilePath + $".backup_{DateTime.Now:yyyyMMddHHmmss}";
+            File.Copy(legacyFilePath, backupPath, true);
+            
+            // Optionally, delete the legacy file
+            // File.Delete(legacyFilePath);
+            
+            _logService.Info($"Directory metadata migration completed. Created backup at {backupPath}");
+        }
+        catch (Exception ex)
+        {
+            _logService.Error($"Error migrating legacy directory metadata: {ex.Message}", ex);
+            throw;
+        }
     }
     
     // Gets directory metadata by directory ID
@@ -39,11 +151,14 @@ public class DirectoryRepository : IDirectoryRepository
     }
 
     // Gets all directory metadata for a specific user
-    public Task<IEnumerable<DirectoryMetadata>> GetDirectoriesByUserId(string userId)
+    public async Task<IEnumerable<DirectoryMetadata>> GetDirectoriesByUserId(string userId)
     {
         if (string.IsNullOrEmpty(userId))
-            return Task.FromResult<IEnumerable<DirectoryMetadata>>(Array.Empty<DirectoryMetadata>());
-
+            return Array.Empty<DirectoryMetadata>();
+        
+        // Ensure user metadata is loaded
+        await LoadUserMetadata(userId);
+        
         lock (_lock)
         {
             var userDirectories = _metadata.Values
@@ -51,16 +166,19 @@ public class DirectoryRepository : IDirectoryRepository
                 .OrderBy(m => m.Name)
                 .ToList();
                 
-            return Task.FromResult<IEnumerable<DirectoryMetadata>>(userDirectories);
+            return userDirectories;
         }
     }
 
     // Gets directory metadata for directories with a specific parent
-    public Task<IEnumerable<DirectoryMetadata>> GetDirectoriesByParentId(string parentDirectoryId, string userId)
+    public async Task<IEnumerable<DirectoryMetadata>> GetDirectoriesByParentId(string parentDirectoryId, string userId)
     {
         if (string.IsNullOrEmpty(userId))
-            return Task.FromResult<IEnumerable<DirectoryMetadata>>(Array.Empty<DirectoryMetadata>());
-
+            return Array.Empty<DirectoryMetadata>();
+        
+        // Ensure user metadata is loaded
+        await LoadUserMetadata(userId);
+        
         lock (_lock)
         {
             var directories = _metadata.Values
@@ -68,7 +186,7 @@ public class DirectoryRepository : IDirectoryRepository
                 .OrderBy(m => m.Name)
                 .ToList();
                 
-            return Task.FromResult<IEnumerable<DirectoryMetadata>>(directories);
+            return directories;
         }
     }
 
@@ -84,6 +202,9 @@ public class DirectoryRepository : IDirectoryRepository
 
         if (string.IsNullOrEmpty(directoryMetadata.Id))
             throw new ArgumentException("Directory ID cannot be empty", nameof(directoryMetadata.Id));
+        
+        if (string.IsNullOrEmpty(directoryMetadata.UserId))
+            throw new ArgumentException("User ID cannot be empty", nameof(directoryMetadata.UserId));
 
         // Validate parent directory if specified
         if (!string.IsNullOrEmpty(directoryMetadata.ParentDirectoryId))
@@ -122,10 +243,10 @@ public class DirectoryRepository : IDirectoryRepository
             }
 
             _metadata[directoryMetadata.Id] = directoryMetadata;
-
         }
+        
         // Save changes to storage
-        await SaveMetadata();
+        await SaveUserMetadata(directoryMetadata.UserId);
             
         _logService.Debug($"Directory metadata added: {directoryMetadata.Name} (ID: {directoryMetadata.Id})");
         return true;
@@ -139,6 +260,9 @@ public class DirectoryRepository : IDirectoryRepository
             
         if (string.IsNullOrEmpty(directoryMetadata.Id))
             throw new ArgumentException("Directory ID cannot be empty.", nameof(directoryMetadata));
+        
+        if (string.IsNullOrEmpty(directoryMetadata.UserId))
+            throw new ArgumentException("User ID cannot be empty.", nameof(directoryMetadata.UserId));
 
         lock (_lock)
         {
@@ -152,7 +276,7 @@ public class DirectoryRepository : IDirectoryRepository
         }
 
         // Save changes to storage
-        await SaveMetadata();
+        await SaveUserMetadata(directoryMetadata.UserId);
             
         _logService.Debug($"Directory metadata updated: {directoryMetadata.Name} (ID: {directoryMetadata.Id})");
         return true;
@@ -164,6 +288,8 @@ public class DirectoryRepository : IDirectoryRepository
             throw new ArgumentException("Directory ID cannot be empty.", nameof(directoryId));
 
         DirectoryMetadata metadata;
+        string userId;
+        
         lock (_lock)
         {
             if (!_metadata.TryGetValue(directoryId, out metadata))
@@ -171,6 +297,8 @@ public class DirectoryRepository : IDirectoryRepository
                 _logService.Warning($"Attempted to delete non-existent directory metadata: {directoryId}");
                 return false;
             }
+            
+            userId = metadata.UserId;
 
             // Check if there are subdirectories
             bool hasSubdirectories = _metadata.Values.Any(d => d.ParentDirectoryId == directoryId);
@@ -184,18 +312,26 @@ public class DirectoryRepository : IDirectoryRepository
         }
 
         // Save changes to storage
-        await SaveMetadata();
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await SaveUserMetadata(userId);
             
-        _logService.Info($"Directory metadata deleted: {metadata.Name} (ID: {directoryId})");
-        return true;
+            _logService.Info($"Directory metadata deleted: {metadata.Name} (ID: {directoryId})");
+            return true;
+        }
+        
+        return false;
     }
 
     // Checks if a directory exists with the given name and parent
-    public Task<bool> DirectoryExistsWithName(string name, string parentDirectoryId, string userId)
+    public async Task<bool> DirectoryExistsWithName(string name, string parentDirectoryId, string userId)
     {
         if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(userId))
-            return Task.FromResult(false);
-
+            return false;
+        
+        // Ensure user metadata is loaded
+        await LoadUserMetadata(userId);
+        
         lock (_lock)
         {
             bool exists = _metadata.Values.Any(d => d.UserId 
@@ -204,17 +340,29 @@ public class DirectoryRepository : IDirectoryRepository
                 && ((parentDirectoryId == null 
                 && string.IsNullOrEmpty(d.ParentDirectoryId)) 
                 || (d.ParentDirectoryId == parentDirectoryId)));
-            return Task.FromResult(exists);
+            return exists;
         }
-        
     }
 
     // Gets all subdirectories for a given directory recursively
-    public Task<IEnumerable<DirectoryMetadata>> GetAllSubdirectoriesRecursive(string directoryId)
+    public async Task<IEnumerable<DirectoryMetadata>> GetAllSubdirectoriesRecursive(string directoryId)
     {
         if (string.IsNullOrEmpty(directoryId))
-            return Task.FromResult<IEnumerable<DirectoryMetadata>>(Array.Empty<DirectoryMetadata>());
-
+            return Array.Empty<DirectoryMetadata>();
+        
+        // First get the directory to determine user ID
+        DirectoryMetadata directory;
+        lock (_lock)
+        {
+            _metadata.TryGetValue(directoryId, out directory);
+        }
+        
+        if (directory == null)
+            return Array.Empty<DirectoryMetadata>();
+        
+        // Ensure user metadata is loaded
+        await LoadUserMetadata(directory.UserId);
+        
         lock (_lock)
         {
             var result = new List<DirectoryMetadata>();
@@ -242,128 +390,153 @@ public class DirectoryRepository : IDirectoryRepository
                 }
             }
                 
-            return Task.FromResult<IEnumerable<DirectoryMetadata>>(result);
+            return result;
         }
     }
     
-    private async Task SaveMetadata()
+    // Helper method to get user-specific metadata directory
+    private string GetUserMetadataDirectory(string userId)
+    {
+        return Path.Combine(_metadataPath, userId);
+    }
+    
+    // Helper method to get user-specific directory metadata path
+    private string GetUserMetadataFilePath(string userId)
+    {
+        string userDirectory = GetUserMetadataDirectory(userId);
+        return Path.Combine(userDirectory, "directories.json");
+    }
+    
+    // Loads metadata for all users
+    private async Task LoadAllUserMetadata()
     {
         try
         {
-            string filePath = Path.Combine(_metadataPath, "directories.json");
-                
-            // Create a copy of the metadata dictionary to avoid holding the lock during file I/O
-            Dictionary<string, DirectoryMetadata> metadataCopy;
+            // Get all user directories in the metadata path
+            if (!Directory.Exists(_metadataPath))
+            {
+                _logService.Info($"Metadata path does not exist: {_metadataPath}. Creating it.");
+                Directory.CreateDirectory(_metadataPath);
+                return;
+            }
+            
+            var userDirectories = Directory.GetDirectories(_metadataPath);
+            
+            foreach (var userDir in userDirectories)
+            {
+                string userId = Path.GetFileName(userDir);
+                await LoadUserMetadata(userId);
+            }
+            
+            _logService.Info($"Loaded directory metadata for {userDirectories.Length} users");
+        }
+        catch (Exception ex)
+        {
+            _logService.Error($"Error loading all user metadata: {ex.Message}", ex);
+        }
+    }
+    
+    // Loads metadata for a specific user
+    private async Task LoadUserMetadata(string userId)
+    {
+        if (string.IsNullOrEmpty(userId))
+        {
+            _logService.Warning("Attempted to load directory metadata for empty user ID");
+            return;
+        }
+        
+        try
+        {
+            string userFilePath = GetUserMetadataFilePath(userId);
+            
+            if (!File.Exists(userFilePath))
+            {
+                // User may not have any directories yet, this is normal
+                _logService.Debug($"No directory metadata found for user {userId}");
+                return;
+            }
+            
+            // Read the file
+            string json = await File.ReadAllTextAsync(userFilePath);
+            
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                _logService.Warning($"Directory metadata file is empty for user {userId}");
+                return;
+            }
+            
+            // Deserialize from JSON
+            var metadataList = JsonSerializer.Deserialize<List<DirectoryMetadata>>(json);
+            
+            if (metadataList == null || metadataList.Count == 0)
+            {
+                _logService.Debug($"No directory metadata entries found for user {userId}");
+                return;
+            }
+            
+            // Update the metadata dictionary
             lock (_lock)
             {
-                metadataCopy = new Dictionary<string, DirectoryMetadata>(_metadata);
+                foreach (var metadata in metadataList)
+                {
+                    if (!string.IsNullOrEmpty(metadata.Id))
+                    {
+                        _metadata[metadata.Id] = metadata;
+                    }
+                }
             }
-                
-            // Convert to a list for serialization
-            var metadataList = metadataCopy.Values.ToList();
-                
+            
+            _logService.Debug($"Loaded {metadataList.Count} directory metadata entries for user {userId}");
+        }
+        catch (Exception ex)
+        {
+            _logService.Error($"Error loading directory metadata for user {userId}: {ex.Message}", ex);
+        }
+    }
+    
+    // Saves metadata for a specific user
+    private async Task SaveUserMetadata(string userId)
+    {
+        if (string.IsNullOrEmpty(userId))
+        {
+            _logService.Warning("Attempted to save directory metadata with empty user ID");
+            return;
+        }
+        
+        try
+        {
+            // Get the user-specific metadata directory and file path
+            string userMetadataDirectory = GetUserMetadataDirectory(userId);
+            Directory.CreateDirectory(userMetadataDirectory);
+            
+            string userFilePath = Path.Combine(userMetadataDirectory, "directories.json");
+            
+            // Filter metadata for this user
+            List<DirectoryMetadata> userMetadata;
+            lock (_lock)
+            {
+                userMetadata = _metadata.Values
+                    .Where(m => m.UserId == userId)
+                    .ToList();
+            }
+            
             // Serialize to JSON
             var options = new JsonSerializerOptions
             {
                 WriteIndented = true
             };
-                
-            string json = JsonSerializer.Serialize(metadataList, options);
-                
+            
+            string json = JsonSerializer.Serialize(userMetadata, options);
+            
             // Write to file
-            await File.WriteAllTextAsync(filePath, json);
-                
-            _logService.Debug($"Directory metadata saved to {filePath}");
+            await File.WriteAllTextAsync(userFilePath, json);
+            
+            _logService.Debug($"Saved {userMetadata.Count} directory metadata entries for user {userId}");
         }
         catch (Exception ex)
         {
-            _logService.Error($"Error saving directory metadata: {ex.Message}", ex);
-            throw new FileOperationException("Failed to save directory metadata.", ex);
-        }
-    }
-
-    private async Task LoadMetadata()
-    { 
-        try 
-        { 
-            string filePath = Path.Combine(_metadataPath, "directories.json");
-            
-            if (!File.Exists(filePath)) 
-            { 
-                _logService.Info($"Directory metadata file not found at {filePath}. Creating a new one."); 
-                // Create an empty dictionary
-                lock (_lock) 
-                { 
-                    _metadata = new Dictionary<string, DirectoryMetadata>();
-                } 
-                return;
-            }
-                
-            // Read the file
-            string json = await File.ReadAllTextAsync(filePath);
-            
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                _logService.Warning($"Directory metadata file is empty at {filePath}");
-                lock (_lock)
-                {
-                    _metadata = new Dictionary<string, DirectoryMetadata>();
-                }
-                return;
-            }
-            
-            try
-            {
-                // Deserialize from JSON
-                var metadataList = JsonSerializer.Deserialize<List<DirectoryMetadata>>(json);
-                
-                // Build the dictionary
-                Dictionary<string, DirectoryMetadata> metadataDict = new Dictionary<string, DirectoryMetadata>();
-                foreach (var metadata in metadataList)
-                {
-                    if (!string.IsNullOrEmpty(metadata.Id))
-                    {
-                        metadataDict[metadata.Id] = metadata;
-                    }
-                }
-                
-                // Update the metadata dictionary
-                lock (_lock)
-                {
-                    _metadata = metadataDict;
-                }
-                
-                _logService.Info($"Loaded {_metadata.Count} directory metadata entries from {filePath}");
-            }
-            catch (JsonException jsonEx)
-            {
-                _logService.Warning($"Invalid JSON format in directory metadata file. Creating backup and starting fresh: {jsonEx.Message}");
-                
-                // Back up the corrupted file
-                string backupPath = filePath + $".backup_{DateTime.Now:yyyyMMddHHmmss}";
-                File.Copy(filePath, backupPath, true);
-                _logService.Info($"Created backup of directory metadata file at {backupPath}");
-                
-                // Start with empty dictionary
-                lock (_lock)
-                {
-                    _metadata = new Dictionary<string, DirectoryMetadata>();
-                }
-                
-                // Create a new, valid JSON file
-                await SaveMetadata();
-            }
-            
-        }
-        catch (Exception ex)
-        {
-            _logService.Error($"Error loading directory metadata: {ex.Message}", ex);
-            
-            // If we can't load the metadata, just start with an empty dictionary
-            lock (_lock)
-            {
-                _metadata = new Dictionary<string, DirectoryMetadata>();
-            }
+            _logService.Error($"Error saving directory metadata for user {userId}: {ex.Message}", ex);
+            throw new FileOperationException($"Failed to save directory metadata for user {userId}", ex);
         }
     }
 }

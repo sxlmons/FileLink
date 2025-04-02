@@ -431,8 +431,7 @@ namespace FileLink.Server.Disk.FileManagement
                 var file = await GetFileMetadataById(fileId);
                 if (file == null || file.UserId != userId)
                 {
-                    _logService.Warning(
-                        $"File not found or access denied when moving file {fileId} to directory {directoryId}");
+                    _logService.Warning($"File not found or access denied when moving file {fileId} to directory {directoryId}");
                     allSuccessful = false;
                     continue;
                 }

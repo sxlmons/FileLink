@@ -23,6 +23,7 @@ namespace FileLink.Server.Disk.DirectoryManagement
             _logService = logService ?? throw new ArgumentNullException(nameof(logService));
         }
 
+        // Modified CreateDirectory method in DirectoryService.cs
         public async Task<DirectoryMetadata> CreateDirectory(string userId, string directoryName, string parentDirectoryId = null)
         {
             try
@@ -68,12 +69,28 @@ namespace FileLink.Server.Disk.DirectoryManagement
                 // Generate a unique directory ID
                 string directoryId = Guid.NewGuid().ToString();
                 
-                // Get the physical path for the directory (and make it absolute)
-                string physicalPath = _storageService.GetDirectoryPath(userId, directoryName, parentPath);
-                physicalPath = Path.GetFullPath(physicalPath);
+                // Get the physical path for the directory
+                string physicalPath;
+                string metadataPath; // This will store the path in the format we want for the metadata
                 
-                // Create directory metadata
-                var metadata = new DirectoryMetadata(userId, directoryName, parentDirectoryId, physicalPath);
+                if (string.IsNullOrEmpty(parentPath))
+                {
+                    // Root-level directory - similar to how FileService does it
+                    string relativePath = Path.Combine("data", "files", userId, directoryName);
+                    physicalPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, relativePath);
+                    metadataPath = relativePath; // Store only the relative path in metadata
+                }
+                else
+                {
+                    // Nested directory - use parent's path
+                    // Since parent's path is already in the desired format, just append the new directory name
+                    metadataPath = Path.Combine(parentPath, directoryName);
+                    // But for physical operations, we need the absolute path
+                    physicalPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, metadataPath);
+                }
+                
+                // Create directory metadata with the relative path
+                var metadata = new DirectoryMetadata(userId, directoryName, parentDirectoryId, metadataPath);
                 
                 // Create the physical directory
                 bool dirCreated = _storageService.CreateDirectory(physicalPath);
@@ -93,7 +110,7 @@ namespace FileLink.Server.Disk.DirectoryManagement
                     throw new FileOperationException("Failed to add directory metadata.");
                 }
                 
-                _logService.Info($"Directory created: {directoryName} (ID: {directoryId}, User: {userId}, Physical path: {physicalPath})");
+                _logService.Info($"Directory created: {directoryName} (ID: {directoryId}, User: {userId}, Physical path: {physicalPath}, Metadata path: {metadataPath})");
                 
                 return metadata;
             }
