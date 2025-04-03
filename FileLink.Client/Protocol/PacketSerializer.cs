@@ -213,6 +213,7 @@ namespace FileLink.Client.Protocol
                     {
                         packet.Payload = tempData; // if the packet is never encrypted to begin with, it will be stored in packet.Payload
                     }
+                    
                 }
 
                 return packet;
