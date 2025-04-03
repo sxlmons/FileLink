@@ -16,16 +16,22 @@ namespace FileLink.Client
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                    
+                    // Add Inter font family
+                    fonts.AddFont("Inter_18-Regular.ttf", "InterRegular");
+                    fonts.AddFont("Inter_18-Medium.ttf", "InterMedium");
+                    fonts.AddFont("Inter_18-SemiBold.ttf", "InterSemiBold");
+                    fonts.AddFont("Inter_18-Bold.ttf", "InterBold");
                 })
                 .UseSkiaSharp();
             
-            // Register services
+            // Register services as singletons so they maintain state throughout the app
             builder.Services.AddSingleton<NetworkService>();
             builder.Services.AddSingleton<AuthenticationService>(); 
             builder.Services.AddSingleton<FileService>();
             builder.Services.AddSingleton<DirectoryService>();
 
-            // Register pages
+            // Register pages with transient scope
             builder.Services.AddTransient<LoginPage>();
             builder.Services.AddTransient<MainPage>();
 
