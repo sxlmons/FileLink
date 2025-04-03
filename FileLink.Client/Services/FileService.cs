@@ -210,7 +210,127 @@ public class FileService
         }
 
         
-        // ... Download functionality to come ...
+        // ... Download functionality ...
+        
+        private async Task<DownloadInitResponse?> InitializeDownloadAsync(string fileId, string userId)
+        {
+            try
+            {
+                // Create the download initialization request packet
+                var packet = new Packet(Commands.CommandCode.FILE_DOWNLOAD_INIT_REQUEST)
+                {
+                    UserId = userId
+                };
+
+                packet.Metadata["FileId"] = fileId;
+
+                // Send the packet and get the response
+                var response = await _networkService.SendAndReceiveAsync(packet);
+
+                if (response == null || response.CommandCode == Commands.CommandCode.ERROR)
+                {
+                    return null;
+                }
+
+                if (response.Payload == null || response.Payload.Length == 0)
+                {
+                    return null;
+                }
+
+                // Deserialize the response
+                var initResponse = JsonSerializer.Deserialize<DownloadInitResponse>(response.Payload);
+
+                if (initResponse == null || !initResponse.Success)
+                {
+                    return null;
+                }
+
+                return initResponse;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing download: {ex.Message}");
+                return null;
+            }
+        }
+
+        private async Task<byte[]?> DownloadChunkAsync(string fileId, int chunkIndex, string userId)
+        {
+            try
+            {
+                // Create the chunk download request packet
+                var packet = new Packet(Commands.CommandCode.FILE_DOWNLOAD_CHUNK_REQUEST)
+                {
+                    UserId = userId
+                };
+
+                packet.Metadata["FileId"] = fileId;
+                packet.Metadata["ChunkIndex"] = chunkIndex.ToString();
+
+                // Send the packet and get the response
+                var response = await _networkService.SendAndReceiveAsync(packet);
+
+                if (response == null || response.CommandCode == Commands.CommandCode.ERROR)
+                {
+                    return null;
+                }
+
+                // Extract success flag and message from metadata
+                if (response.Metadata.TryGetValue("Success", out string? successString) &&
+                    bool.TryParse(successString, out bool success) &&
+                    !success)
+                {
+                    return null;
+                }
+
+                // For chunk responses, the payload is the binary chunk data
+                return response.Payload;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error downloading chunk {chunkIndex}: {ex.Message}");
+                return null;
+            }
+        }
+
+        private async Task<bool> CompleteDownloadAsync(string fileId, string userId)
+        {
+            try
+            {
+                // Create the download complete request packet
+                var packet = new Packet(Commands.CommandCode.FILE_DOWNLOAD_COMPLETE_REQUEST)
+                {
+                    UserId = userId
+                };
+
+                packet.Metadata["FileId"] = fileId;
+
+                // Send the packet and get the response
+                var response = await _networkService.SendAndReceiveAsync(packet);
+
+                if (response == null || response.CommandCode == Commands.CommandCode.ERROR)
+                {
+                    return false;
+                }
+
+                if (response.Payload == null || response.Payload.Length == 0)
+                {
+                    return false;
+                }
+
+                // Deserialize the response
+                var completeResponse = JsonSerializer.Deserialize<DownloadCompleteResponse>(response.Payload);
+
+                return completeResponse?.Success ?? false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error completing download: {ex.Message}");
+                return false;
+            }
+        }
+
+
 
         private string GetContentType(string fileName)
         {
