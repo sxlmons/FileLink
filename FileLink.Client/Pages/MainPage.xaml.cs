@@ -1,24 +1,30 @@
-﻿using FileLink.Client.FileOperations;
-using FileLink.Client.Services;
-using FileLink.Client.Session;
+﻿using FileLink.Client.Services;
 
 namespace FileLink.Client.Pages;
 
 public partial class MainPage : ContentPage
 {
     private readonly AuthenticationService _authService;
+    private readonly NetworkService _networkService;
+    private readonly FileService _fileService;
+    private readonly DirectoryService _directoryService;
     
-    public MainPage(AuthenticationService authService)
+    public MainPage(
+        AuthenticationService authService, 
+        NetworkService networkService, 
+        FileService fileService,
+        DirectoryService directoryService)
     {
         InitializeComponent();
         
         _authService = authService;
+        _networkService = networkService;
+        _fileService = fileService;
+        _directoryService = directoryService;
         
-        // Creates an instance to manage the file stack when uploading files 
-        BindingContext = new MainViewModel();
+        // Create view model with the authenticated services
+        BindingContext = new MainViewModel(_fileService, _authService, _directoryService);
     }
-    
-    
     
     protected override void OnAppearing()
     {
@@ -35,7 +41,6 @@ public partial class MainPage : ContentPage
         // Update UI with current user's information
         UserInfoLabel.Text = $"User: {_authService.CurrentUser?.Username}";
     }
-    
     
     private async void LogoutButton_Clicked(object sender, EventArgs e)
     {
@@ -79,20 +84,3 @@ public partial class MainPage : ContentPage
         }
     }
 }
-
-
-// This is campbell's code
-// This is used to have all of our view models viewable as data contexts 
-public class MainViewModel
-{
-    public FileSelector FileVM { get; set; }
-    
-    CloudSession _session = new CloudSession("localhost", 9000);
-
-    public MainViewModel()
-    {
-        FileVM = new FileSelector(_session);
-    }
-}
-    
-

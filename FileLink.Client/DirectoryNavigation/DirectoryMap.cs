@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using FileLink.Client.Models;
+using FileLink.Client.Services;
 
 namespace FileLink.Client.DirectoryNavigation;
 
@@ -9,27 +11,45 @@ namespace FileLink.Client.DirectoryNavigation;
     This class will cover the logic that allows the client to navigate the directories they
     have hosted on the server. The problem we ran into was having a reliable navigation method 
     without having prebuilt directory paths to follow inside the client. 
-    
+
     We came up with storing them in a map that maps the file path to all files inside each directory.
     This allows up to update specific directories without having to rewrite the entire client's directory 
     each time, and all without the client having any of this directory tree built on their device. 
 
     This summary is to get everyone caught up on client navigation. can be deleting later. 
+
+    UPDATE: 01/04/2025
+    What Was Preserved:
+    The core concept and public API (Files collection, commands)
+    UI interaction patterns and property change notifications
+    The ShownFiles class structure
+
+    What Was Significantly Modified:
+    Changed from using local storage to server communication
+    Added proper service dependencies (DirectoryService, AuthenticationService, FileService)
+    Replaced file system operations with API calls
+
+    What Was Added:
+    Server-based directory navigation
+    ID tracking for files and directories
+    Type flag to distinguish files from directories
+    Methods to talk to the server API instead of the local file system
 */
+
 
 public class DirectoryMap : INotifyPropertyChanged
 {
-    Dictionary<string, string[]> directoryMap = new();
-
-    private string UserDirectoryPath;
-    private string LocalDirectoryPath;
+    private readonly DirectoryService _directoryService;
+    private readonly AuthenticationService _authService;
+    private readonly FileService _fileService;
+    
+    private string _currentDirectoryId;
     
     public event PropertyChangedEventHandler PropertyChanged;
     
     public ObservableCollection<ShownFiles> Files { get; set; } = new();
     
     private bool _isButtonVisible;
-
     public bool IsButtonVisible
     {
         get => _isButtonVisible;
@@ -46,147 +66,146 @@ public class DirectoryMap : INotifyPropertyChanged
     public ICommand clickDirectoryCommand { get; }
     public ICommand backButtonCommand { get; }
     
-    public DirectoryMap()
+    public DirectoryMap(DirectoryService directoryService, AuthenticationService authService, FileService fileService)
     {
-        // gets the path for the directory where our local directory storage sits
-        UserDirectoryPath = Path.Combine(FileSystem.AppDataDirectory, "FileLinkLocalDirectory");
+        _directoryService = directoryService ?? throw new ArgumentNullException(nameof(directoryService));
+        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
         
-        // Ensure the directory exists
-        if (!Directory.Exists(UserDirectoryPath))
-            Directory.CreateDirectory(UserDirectoryPath);
+        // Start at root directory (null means root)
+        _currentDirectoryId = null;
         
-        initClientDirectoryMap(UserDirectoryPath);
-
-        setRootDirectoryOnStartUp();
-
         clickDirectoryCommand = new Command<ShownFiles>(directoryClicked);
         backButtonCommand = new Command(clickBackDirectory);
+        
+        // Load the root directory on startup
+        MainThread.BeginInvokeOnMainThread(async () => await LoadCurrentDirectory());
     }
     
-    // sets the ui to whatever is in the root dir at start up 
-    public void setRootDirectoryOnStartUp()
+    // Load and display contents of current directory
+    private async Task LoadCurrentDirectory()
     {
-        LocalDirectoryPath = "/root";
-        // same process as reload function
-        foreach (var file in directoryMap[LocalDirectoryPath])
+        if (!_authService.IsLoggedIn)
         {
-            var newFile = new ShownFiles();
-            if (file.Contains('.'))
-                newFile.pngType = "file.png";
-            else 
-                newFile.pngType = "folder.png";
-            newFile.fileName = file;
-            Files.Add(newFile);
+            Console.WriteLine("User is not logged in. Cannot load directory contents.");
+            return;
         }
         
-        // TODO find a way to reuse the reload directory function here 
-        // TODO currently when you add File.Clear(); it doesnt work because its 
-        // TODO not initiated yet 
-        // try adding a blank file then clearing it then continuing 
-    }
-
-    // called each time we want to refresh the UI and display the current directory contents
-    public void reloadDirectoryView()
-    {
-        // empty the current files
-        Files.Clear();
-        // access the map with the current local dir path as the key 
-        // and go through each of the values in this foreach loop
-        foreach (var file in directoryMap[LocalDirectoryPath])
+        string userId = _authService.CurrentUser?.Id;
+        if (string.IsNullOrEmpty(userId))
         {
-            var newFile = new ShownFiles();
-            if (file.Contains('.'))
-                newFile.pngType = "file.png";
-            else 
-                newFile.pngType = "folder.png";
-            // make and populate newFile object 
+            Console.WriteLine("User ID is missing. Cannot load directory contents.");
+            return;
+        }
+        
+        try
+        {
+            // Clear existing items
+            Files.Clear();
             
-            newFile.fileName = file;
-            // add it to our ObservableCollection
-            Files.Add(newFile);
+            // Get contents from the server
+            var (files, directories) = await _directoryService.GetDirectoryContentsAsync(_currentDirectoryId, userId);
+            
+            // Add directories first
+            foreach (var dir in directories)
+            {
+                Files.Add(new ShownFiles
+                {
+                    fileName = dir.Name,
+                    pngType = "folder.png",
+                    ItemId = dir.Id,
+                    IsDirectory = true
+                });
+            }
+            
+            // Then add files
+            foreach (var file in files)
+            {
+                Files.Add(new ShownFiles
+                {
+                    fileName = file.FileName,
+                    pngType = "file.png",
+                    ItemId = file.Id,
+                    IsDirectory = false
+                });
+            }
+            
+            // Update back button visibility
+            UpdateButtonVisibility();
         }
-        // refresh
-        UpdateButtonVisibility();
-    }
-    
-    // initiate map at beginning of the program 
-    public void initClientDirectoryMap(string folderPath)
-    {
-        // TODO right now its broken if you start it up for the first time or without a file
-        // TODO it should add the root directory to the file and the map and then display 
-        // TODO and empty directory 
-        
-        /*if (!File.Exists(folderPath))
+        catch (Exception ex)
         {
-            using (StreamWriter writer = File.CreateText(folderPath))
-            {
-                writer.WriteLine("/root,");
-            }
-            directoryMap.Add("/root,", Array.Empty<string>());
-            return;
-        }*/
-        // goes to location that the directory info is locally stored 
-        string filePath = Path.Combine(folderPath, "ClientDirectoryStorage.txt");
-        using (StreamReader reader = new StreamReader(filePath))
-        {
-            string line;
-            string[] parts;
-            while ((line = reader.ReadLine()) != null)
-            {
-                // split the whole line by the ',' 
-                // turns "/root/dir1,file1,file2,file3,"
-                // to    "/root/dir" "file1" "file2" "file3"
-                parts = line.Split(',');
-                
-                // add to our map with the directory path as the key 
-                // and the rest of the elements as an array of files and directories
-                // the servers sends the lines with an extra ',' at the end so the 'parts.Length - 2' accounts for that 
-                directoryMap.Add(parts[0], parts.Skip(1).Take(parts.Length - 2).ToArray());
-            }
+            Console.WriteLine($"Error loading directory: {ex.Message}");
         }
     }
-
-    // called when a dir is clicked 
-    private void directoryClicked(ShownFiles file)
+    
+    // Handle clicking on a directory
+    private async void directoryClicked(ShownFiles file)
     {
-        // checks if the 'file' has a dot in it, currently indicating file 
-        // TODO find a more secure way to distinguish between files and directories
-        if (file.fileName.Contains('.'))
-            return;
-        // if it's not a file but a directory, take that directories name 
-        // add it to the current directory with a '/' in between 
-        LocalDirectoryPath +=  Path.DirectorySeparatorChar + file.fileName;
-        // reload with edited path
-        reloadDirectoryView();
-    }
-
-    // the functionality for going back one directory without the actual directory to navigate 
-    private void splitPathForBackPressed()
-    {
-        // counts the amount of slashes in the current local directory path
-        int slashCount = LocalDirectoryPath.Count(c => c == '/');
+        if (file == null) return;
         
-        // splits the path by the slashes 
-        string[] parts = LocalDirectoryPath.Split('/');
-        
-        // rejoins the path with all components before the count of the last slash
-        // turning /root/dir1/dir2,file1,file2 to 
-        //         /root/dir1 
-        // taking 3 components: "", "/root", and "/dir1" and combining 
-        LocalDirectoryPath = string.Join("/", parts.Take(slashCount));
+        // Only navigate if it's a directory
+        if (file.IsDirectory)
+        {
+            // Store parent directory ID to enable back navigation
+            string previousDirectoryId = _currentDirectoryId;
+            
+            // Set new current directory
+            _currentDirectoryId = file.ItemId;
+            
+            // Load contents of the new directory
+            await LoadCurrentDirectory();
+        }
+        else
+        {
+            // Here you could implement file preview or download
+            Console.WriteLine($"File clicked: {file.fileName}");
+        }
     }
     
-    // command for clicking the back button to go back one directory 
-    private void clickBackDirectory()
+    // Go back to parent directory
+    private async void clickBackDirectory()
     {
-        splitPathForBackPressed();
-        reloadDirectoryView();
+        if (_currentDirectoryId == null)
+            return; // Already at root
+            
+        try
+        {
+            if (!_authService.IsLoggedIn)
+            {
+                Console.WriteLine("User is not logged in. Cannot navigate.");
+                return;
+            }
+            
+            string userId = _authService.CurrentUser?.Id;
+            
+            // Get current directory to find its parent
+            var directory = await _directoryService.GetDirectoryByIdAsync(_currentDirectoryId, userId);
+            if (directory == null)
+            {
+                // Something went wrong, reset to root
+                _currentDirectoryId = null;
+            }
+            else
+            {
+                // Navigate to parent
+                _currentDirectoryId = directory.ParentDirectoryId;
+            }
+            
+            // Load the contents of the parent directory
+            await LoadCurrentDirectory();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error navigating back: {ex.Message}");
+        }
     }
     
-    // Checks if we are in the base directory and takes away the button if we are so we can back out of it 
+    // Update back button visibility
     private void UpdateButtonVisibility()
     {
-        IsButtonVisible = LocalDirectoryPath != "/root";
+        // Show back button if not at root
+        IsButtonVisible = _currentDirectoryId != null;
     }
     
     private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
@@ -195,11 +214,10 @@ public class DirectoryMap : INotifyPropertyChanged
     }
 }
 
-// class that holds any information in the Files var
+// Updated to include ID and type information
 public class ShownFiles
 {
     private string _fileName;
-
     public string fileName
     {
         get => _fileName;   
@@ -207,10 +225,25 @@ public class ShownFiles
     }
 
     private string _pngType;
-
     public string pngType
     {
         get => _pngType;
         set => _pngType = value;
+    }
+    
+    // Add ID to track the server-side ID
+    private string _itemId;
+    public string ItemId
+    {
+        get => _itemId;
+        set => _itemId = value;
+    }
+    
+    // Flag to distinguish directories from files
+    private bool _isDirectory;
+    public bool IsDirectory
+    {
+        get => _isDirectory;
+        set => _isDirectory = value;
     }
 }
