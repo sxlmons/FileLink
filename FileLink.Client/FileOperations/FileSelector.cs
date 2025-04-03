@@ -96,6 +96,9 @@ public class FileSelector : INotifyPropertyChanged
                 var result = await _fileService.UploadFileAsync(file.fullPath, null, userId);
                 if (result != null)
                 {
+                    // This should remove the files as there sent but theres a bug where the click to send only send 1
+                    // it works whenever you send the file those so its low priority 
+                    //RemoveFile(file);
                     Console.WriteLine($"File uploaded successfully: {file.fileName}");
                 }
                 else
