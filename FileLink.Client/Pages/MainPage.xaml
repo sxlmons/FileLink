@@ -174,7 +174,8 @@
                                    Aspect="AspectFit">
                                 <Image.GestureRecognizers>
                                     <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DirectoryVM.clickDirectoryCommand}"
-                                                          CommandParameter="{Binding .}">
+                                                          CommandParameter="{Binding .}"
+                                                          NumberOfTapsRequired="2">
                                     </TapGestureRecognizer>
                                 </Image.GestureRecognizers>
                                 <Image.Shadow>
