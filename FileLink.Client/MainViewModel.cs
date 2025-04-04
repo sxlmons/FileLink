@@ -16,11 +16,11 @@ public class MainViewModel
         AuthenticationService authService, 
         DirectoryService directoryService)
     {
-        // Initialize with the authenticated services
-        FileSelectorVM = new FileSelector(fileService, authService);
-        
         // Initialize directory navigation with the right service
         // This will need to be updated to use DirectoryService too
         DirectoryVM = new DirectoryMap(directoryService, authService, fileService);
+        
+        // Initialize with the authenticated services
+        FileSelectorVM = new FileSelector(fileService, authService, directoryService, DirectoryVM);
     }
 }
