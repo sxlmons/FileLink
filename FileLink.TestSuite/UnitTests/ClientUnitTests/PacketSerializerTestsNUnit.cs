@@ -1,8 +1,9 @@
 ﻿using System.Text;
+using FileLink.Client.Protocol;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 
-namespace FileLink.Client.Protocol;
+namespace FileLink.TestSuite.UnitTests.ClientUnitTests;
 
 [TestFixture]
 public class PacketSerializerTestsNUnit 
@@ -33,7 +34,7 @@ public class PacketSerializerTestsNUnit
         var serialized = _serializer.Serialize(packet);
         var deserializePacket = _serializer.Deserialize(serialized);
         
-        Assert.That(packet.CommandCode, Is.EqualTo(deserializePacket.CommandCode));
+        NUnit.Framework.Assert.That(packet.CommandCode, Is.EqualTo(deserializePacket.CommandCode));
 
     }
     
@@ -55,7 +56,7 @@ public class PacketSerializerTestsNUnit
         var serialized = _serializer.Serialize(packet);
         var deserializePacket = _serializer.Deserialize(serialized);
         
-        Assert.That(packet.PacketId, Is.EqualTo(deserializePacket.PacketId));
+        NUnit.Framework.Assert.That(packet.PacketId, Is.EqualTo(deserializePacket.PacketId));
 
     }
     
@@ -77,7 +78,7 @@ public class PacketSerializerTestsNUnit
         var serialized = _serializer.Serialize(packet);
         var deserializePacket = _serializer.Deserialize(serialized);
         
-        Assert.That(packet.UserId, Is.EqualTo(deserializePacket.UserId));
+        NUnit.Framework.Assert.That(packet.UserId, Is.EqualTo(deserializePacket.UserId));
 
     }
     
@@ -99,7 +100,7 @@ public class PacketSerializerTestsNUnit
         var serialized = _serializer.Serialize(packet);
         var deserializePacket = _serializer.Deserialize(serialized);
         
-        Assert.That(packet.Timestamp.Ticks, Is.EqualTo(deserializePacket.Timestamp.Ticks));
+        NUnit.Framework.Assert.That(packet.Timestamp.Ticks, Is.EqualTo(deserializePacket.Timestamp.Ticks));
 
     }
     
@@ -121,7 +122,7 @@ public class PacketSerializerTestsNUnit
         var serialized = _serializer.Serialize(packet);
         var deserializePacket = _serializer.Deserialize(serialized);
         
-        CollectionAssert.AreEqual(packet.Metadata, deserializePacket.Metadata);
+        NUnit.Framework.Legacy.CollectionAssert.AreEqual(packet.Metadata, deserializePacket.Metadata);
 
     }
     
@@ -145,7 +146,7 @@ public class PacketSerializerTestsNUnit
 
         if (deserializePacket.Payload != null)
         {
-            CollectionAssert.AreEqual(packet.Payload, deserializePacket.Payload);
+            NUnit.Framework.Legacy.CollectionAssert.AreEqual(packet.Payload, deserializePacket.Payload);
         }
 
     }
@@ -168,7 +169,7 @@ public class PacketSerializerTestsNUnit
         var serialized = _serializer.Serialize(packet);
         var deserializePacket = _serializer.Deserialize(serialized);
         
-        Assert.That(deserializePacket.Metadata, Is.Empty);
+        NUnit.Framework.Assert.That(deserializePacket.Metadata, Is.Empty);
 
     }
 
@@ -189,7 +190,7 @@ public class PacketSerializerTestsNUnit
         var serialized = _serializer.Serialize(packet);
         var deserializePacket = _serializer.Deserialize(serialized);
         
-        Assert.That(deserializePacket.Payload, Is.Null);
+        NUnit.Framework.Assert.That(deserializePacket.Payload, Is.Null);
         
     }
 
@@ -211,10 +212,10 @@ public class PacketSerializerTestsNUnit
         var serialized = _serializer.Serialize(packet);
         var deserializePacket = _serializer.Deserialize(serialized);
         
-        Assert.That(deserializePacket.EncryptedPayload, Is.Not.Null);
+        NUnit.Framework.Assert.That(deserializePacket.EncryptedPayload, Is.Not.Null);
         if (deserializePacket.Payload != null)
         {
-            CollectionAssert.AreEqual(packet.Payload, deserializePacket.Payload);
+            NUnit.Framework.Legacy.CollectionAssert.AreEqual(packet.Payload, deserializePacket.Payload);
         }
         
     }
@@ -238,7 +239,7 @@ public class PacketSerializerTestsNUnit
         ms.Position = 0;
         var deserializePacket = await _serializer.ReadPacketFromStreamAsync(ms, CancellationToken.None);
         
-        Assert.That(packet.CommandCode, Is.EqualTo(deserializePacket.CommandCode));
+        NUnit.Framework.Assert.That(packet.CommandCode, Is.EqualTo(deserializePacket.CommandCode));
 
     }
     
@@ -261,7 +262,7 @@ public class PacketSerializerTestsNUnit
         ms.Position = 0;
         var deserializePacket = await _serializer.ReadPacketFromStreamAsync(ms, CancellationToken.None);
         
-        Assert.That(packet.PacketId, Is.EqualTo(deserializePacket.PacketId));
+        NUnit.Framework.Assert.That(packet.PacketId, Is.EqualTo(deserializePacket.PacketId));
 
     }
     
@@ -284,7 +285,7 @@ public class PacketSerializerTestsNUnit
         ms.Position = 0;
         var deserializePacket = await _serializer.ReadPacketFromStreamAsync(ms, CancellationToken.None);
         
-        Assert.That(packet.UserId, Is.EqualTo(deserializePacket.UserId));
+        NUnit.Framework.Assert.That(packet.UserId, Is.EqualTo(deserializePacket.UserId));
 
     }
     
@@ -309,7 +310,7 @@ public class PacketSerializerTestsNUnit
 
         if (deserializePacket.Payload != null)
         {
-            CollectionAssert.AreEqual(packet.Payload, deserializePacket.Payload);
+            NUnit.Framework.Legacy.CollectionAssert.AreEqual(packet.Payload, deserializePacket.Payload);
         }
 
     }
@@ -318,7 +319,7 @@ public class PacketSerializerTestsNUnit
     public void Deserialize_Invalid_ProtocolVersion_Throws_Exception()
     {
         byte[] invalidData = new byte[] { 99, 0, 5, 3, 1 };
-        Assert.Throws<ProtocolException>(() => _serializer.Deserialize(invalidData));
+        NUnit.Framework.Assert.Throws<ProtocolException>(() => _serializer.Deserialize(invalidData));
         
     }
 
