@@ -181,7 +181,16 @@ namespace FileLink.Server.Network
             }
             finally
             {
-                _receiveLock.Release();
+                try
+                {
+                    _receiveLock.Release();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // The semaphore was disposed while this method was running
+                    // This can happen during shutdown, so we can safely ignore it
+                    LogService.Debug("Semaphore was disposed during packet receive operation");
+                }
             }
         }
 

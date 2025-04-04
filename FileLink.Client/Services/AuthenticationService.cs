@@ -108,6 +108,9 @@ namespace FileLink.Client.Services
                 // Extract the response data
                 var (success, message) = _packetFactory.ExtractLogoutResponse(response);
                 
+                // Always reset connection after logout attempt, regardless of success
+                _networkService.ResetConnection();
+                
                 if (success)
                 {
                     // Clear the current user
@@ -118,6 +121,8 @@ namespace FileLink.Client.Services
             }
             catch (Exception ex)
             {
+                // Reset connection on error too
+                _networkService.ResetConnection();
                 return (false, $"Error during logout: {ex.Message}");
             }
         }
