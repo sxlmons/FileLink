@@ -194,7 +194,7 @@ public class PacketSerializerTestsNUnit
     }
 
     [Test]
-    public void Serialize_Encrypted_Payload_Should_Decrypt()
+    public void Serialize_Encrypted_Payload_Should_Decrypt_File_Chunk_Request()
     {
 
         var packet = new Packet

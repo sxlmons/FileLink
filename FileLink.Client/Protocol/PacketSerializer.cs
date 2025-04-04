@@ -71,10 +71,7 @@ namespace FileLink.Client.Protocol
                 {
                     // Add packet type differentiator 
 
-                    if (packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_CHUNK_REQUEST || packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_CHUNK_RESPONSE || 
-                        packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_CHUNK_REQUEST || packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_CHUNK_RESPONSE ||
-                        packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_INIT_REQUEST || packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_INIT_RESPONSE || 
-                        packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_INIT_REQUEST || packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_INIT_RESPONSE) 
+                    if (packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_CHUNK_REQUEST) 
                     {
                         
                         packet.EncryptedPayload = EncryptPayload(packet.Payload); // Encrypting packet payload yo
@@ -82,22 +79,11 @@ namespace FileLink.Client.Protocol
                         writer.Write(packet.EncryptedPayload); // Writing the encrypted payload 
                         
                     }
-                    else if(packet.CommandCode == Commands.CommandCode.LOGIN_REQUEST || packet.CommandCode == Commands.CommandCode.LOGIN_RESPONSE ||
-                            packet.CommandCode == Commands.CommandCode.LOGOUT_RESPONSE || packet.CommandCode == Commands.CommandCode.LOGOUT_REQUEST ||
-                            packet.CommandCode == Commands.CommandCode.FILE_LIST_RESPONSE || packet.CommandCode == Commands.CommandCode.FILE_LIST_REQUEST ||
-                            packet.CommandCode == Commands.CommandCode.FILE_DELETE_RESPONSE || packet.CommandCode == Commands.CommandCode.FILE_DELETE_REQUEST || 
-                            packet.CommandCode == Commands.CommandCode.CREATE_ACCOUNT_REQUEST || packet.CommandCode == Commands.CommandCode.CREATE_ACCOUNT_RESPONSE ||
-                            packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_COMPLETE_REQUEST || packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_COMPLETE_RESPONSE ||
-                            packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_COMPLETE_RESPONSE || packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_COMPLETE_REQUEST ||
-                            packet.CommandCode == Commands.CommandCode.ERROR || packet.CommandCode == Commands.CommandCode.SUCCESS)
+                    else
                     {
                         writer.Write(packet.Payload.Length);
                         writer.Write(packet.Payload);
                         
-                    }
-                    else
-                    {
-                        writer.Write(0);
                     }
 
                 }
@@ -192,15 +178,7 @@ namespace FileLink.Client.Protocol
                 int payloadLength = reader.ReadInt32();
                 if (payloadLength > 0)
                 {
-                    bool encryptedCommands =
-                        packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_CHUNK_REQUEST ||
-                        packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_CHUNK_RESPONSE ||
-                        packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_CHUNK_REQUEST ||
-                        packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_CHUNK_RESPONSE ||
-                        packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_INIT_REQUEST ||
-                        packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_INIT_RESPONSE ||
-                        packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_INIT_REQUEST ||
-                        packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_INIT_RESPONSE;
+                    bool encryptedCommands = packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_CHUNK_REQUEST;
                     
                     byte[] tempData = reader.ReadBytes(payloadLength);
                     
