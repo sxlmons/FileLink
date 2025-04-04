@@ -69,10 +69,12 @@
                             TextColor="White"
                             HorizontalOptions="Start" />
 
-                    <Button Text="Upload Files" 
+                    <Button Text="Create Directory" 
                             BackgroundColor="Transparent"
                             TextColor="White"
-                            HorizontalOptions="Start" />
+                            HorizontalOptions="Start" 
+                            Command="{Binding DirectoryVM.createDirectory}"/>
+                    
                 </VerticalStackLayout>
             </VerticalStackLayout>
             

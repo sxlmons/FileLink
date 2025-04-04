@@ -43,7 +43,7 @@ public class DirectoryMap : INotifyPropertyChanged
     private readonly AuthenticationService _authService;
     private readonly FileService _fileService;
     
-    private string? _currentDirectoryId;
+    public string? _currentDirectoryId;
     
     public event PropertyChangedEventHandler PropertyChanged;
     
@@ -78,6 +78,7 @@ public class DirectoryMap : INotifyPropertyChanged
         }
     }
     
+    public ICommand createDirectory { get; }
     public ICommand clickDirectoryCommand { get; }
     public ICommand backButtonCommand { get; }
     public ICommand removeFilesCommand { get; }
@@ -95,13 +96,14 @@ public class DirectoryMap : INotifyPropertyChanged
         clickDirectoryCommand = new Command<ShownFiles>(directoryClicked);
         backButtonCommand = new Command(clickBackDirectory);
         removeFilesCommand = new Command<ShownFiles>(RemoveFile);
-        retrieveFiles = new Command(RetrieveFiles);
+        retrieveFiles = new Command(async () => await RetrieveFiles());
+        createDirectory = new Command(async () => await CreateDirectory());
         // Load the root directory on startup
         MainThread.BeginInvokeOnMainThread(async () => await LoadCurrentDirectory());
     }
     
     // Load and display contents of current directory
-    private async Task LoadCurrentDirectory()
+    public async Task LoadCurrentDirectory()
     {
         if (!_authService.IsLoggedIn)
         {
@@ -161,7 +163,7 @@ public class DirectoryMap : INotifyPropertyChanged
     // also this along with the majority of the retrieving functions and commands can be moved 
     // but i see a deleting file warning in FileDownloads so i have it here 
     
-    private async void RetrieveFiles()
+    private async Task RetrieveFiles()
     {
         // Verify authentication
         if (!_authService.IsLoggedIn)
@@ -275,6 +277,54 @@ public class DirectoryMap : INotifyPropertyChanged
     {
         // Show back button if not at root
         IsBackButtonVisible = _currentDirectoryId != null;
+    }
+    
+    // BUG HERE WHERE 
+    private async Task CreateDirectory()
+    {
+        string result = await Application.Current.MainPage.DisplayPromptAsync(
+            "Create a Directory", 
+            "Directory Name:", 
+            accept: "Create", 
+            cancel: "Cancel", 
+            placeholder: "Example"
+        );
+
+        if (!string.IsNullOrEmpty(result))
+        {
+            if (!_authService.IsLoggedIn)
+            {
+                Console.WriteLine("User is not logged in. Cannot navigate.");
+                return;
+            }
+            
+            string userId = _authService.CurrentUser?.Id;
+
+            try
+            {
+                var directory = await _directoryService.GetDirectoryByIdAsync(_currentDirectoryId, userId);
+                if (directory == null)
+                {
+                    await _directoryService.CreateDirectoryAsync(result, null, userId);
+                    return;
+                }
+
+                await _directoryService.CreateDirectoryAsync(result, _currentDirectoryId, userId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error creating directory: {ex}");
+            }
+
+            try
+            {
+                await LoadCurrentDirectory();
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"Error loading directory: {ex.Message}");
+            }
+        }
     }
     
     private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")

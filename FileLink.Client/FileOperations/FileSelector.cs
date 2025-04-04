@@ -10,6 +10,7 @@ namespace FileLink.Client.FileOperations;
 
 public class FileSelector : INotifyPropertyChanged
 {
+    private DirectoryMap _directoryMap;
     private readonly FileService _fileService;
     private readonly AuthenticationService _authService;
     private readonly CancellationTokenSource _cts;
@@ -35,10 +36,11 @@ public class FileSelector : INotifyPropertyChanged
     public ICommand RemoveFilesCommand { get; }
     public ICommand SendFilesCommand { get; }
     
-    public FileSelector(FileService fileService, AuthenticationService authService)
+    public FileSelector(FileService fileService, AuthenticationService authService, DirectoryService directoryService, DirectoryMap directoryMap)
     {
         _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        _directoryMap = directoryMap ?? throw new ArgumentNullException(nameof(directoryMap));
         _cts = new CancellationTokenSource();
         
         AddFilesCommand = new Command(async () => await AddFile());
@@ -95,13 +97,14 @@ public class FileSelector : INotifyPropertyChanged
         {
             try
             {
-                var result = await _fileService.UploadFileAsync(file.fullPath, null, userId);
+                var result = await _fileService.UploadFileAsync(file.fullPath, _directoryMap._currentDirectoryId, userId);
                 if (result != null)
                 {
                     // This should remove the files as there sent but theres a bug where the click to send only send 1
                     // it works whenever you send the file those so its low priority 
                     RemoveFile(file);
                     Console.WriteLine($"File uploaded successfully: {file.fileName}");
+                    await _directoryMap.LoadCurrentDirectory();
                 }
                 else
                 {
@@ -113,9 +116,6 @@ public class FileSelector : INotifyPropertyChanged
                 Console.WriteLine($"Error Sending File: {ex.Message}");
             }
         }
-        
-        // Would be useful to be able to call the LoadCurrentDirectory after adding files 
-        // but im not sure how you'd like to go about that 
     }
     
     // Updates the boolean based on Files count
