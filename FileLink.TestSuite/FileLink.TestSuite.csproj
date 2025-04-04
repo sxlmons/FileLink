@@ -23,4 +23,9 @@
       <Folder Include="UnitTests\ServerUnitTests\" />
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\FileLink.Server\FileLink.Server.csproj" />
+        <ProjectReference Include="..\FileLink.Client\FileLink.Client.csproj" />
+    </ItemGroup>
+
 </Project>
