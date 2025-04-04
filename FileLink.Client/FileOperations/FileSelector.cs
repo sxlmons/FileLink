@@ -3,6 +3,8 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using FileLink.Client.Services;
+using System.Threading;
+using FileLink.Client.DirectoryNavigation;
 
 namespace FileLink.Client.FileOperations;
 
@@ -81,7 +83,7 @@ public class FileSelector : INotifyPropertyChanged
             Console.WriteLine("Error Sending File: Not authenticated. Please log in first.");
             return;
         }
-
+        
         string userId = _authService.CurrentUser?.Id;
         if (string.IsNullOrEmpty(userId))
         {
@@ -96,6 +98,9 @@ public class FileSelector : INotifyPropertyChanged
                 var result = await _fileService.UploadFileAsync(file.fullPath, null, userId);
                 if (result != null)
                 {
+                    // This should remove the files as there sent but theres a bug where the click to send only send 1
+                    // it works whenever you send the file those so its low priority 
+                    RemoveFile(file);
                     Console.WriteLine($"File uploaded successfully: {file.fileName}");
                 }
                 else
@@ -108,6 +113,9 @@ public class FileSelector : INotifyPropertyChanged
                 Console.WriteLine($"Error Sending File: {ex.Message}");
             }
         }
+        
+        // Would be useful to be able to call the LoadCurrentDirectory after adding files 
+        // but im not sure how you'd like to go about that 
     }
     
     // Updates the boolean based on Files count
