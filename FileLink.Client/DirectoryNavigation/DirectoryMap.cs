@@ -43,21 +43,36 @@ public class DirectoryMap : INotifyPropertyChanged
     private readonly AuthenticationService _authService;
     private readonly FileService _fileService;
     
-    private string _currentDirectoryId;
+    private string? _currentDirectoryId;
     
     public event PropertyChangedEventHandler PropertyChanged;
     
     public ObservableCollection<ShownFiles> Files { get; set; } = new();
+    public ObservableCollection<ShownFiles> QueuedFiles { get; set; } = new();
     
-    private bool _isButtonVisible;
-    public bool IsButtonVisible
+    private bool _isRetrieveButtonVisible;
+    public bool IsRetrieveButtonVisible
     {
-        get => _isButtonVisible;
+        get => _isRetrieveButtonVisible;
         set
         {
-            if (_isButtonVisible != value)
+            if (_isRetrieveButtonVisible != value)
             {
-                _isButtonVisible = value;
+                _isRetrieveButtonVisible = value;
+                NotifyPropertyChanged();
+            }
+        }
+    }
+    
+    private bool _isBackButtonVisible;
+    public bool IsBackButtonVisible
+    {
+        get => _isBackButtonVisible;
+        set
+        {
+            if (_isBackButtonVisible != value)
+            {
+                _isBackButtonVisible = value;
                 NotifyPropertyChanged();
             }
         }
@@ -65,6 +80,8 @@ public class DirectoryMap : INotifyPropertyChanged
     
     public ICommand clickDirectoryCommand { get; }
     public ICommand backButtonCommand { get; }
+    public ICommand removeFilesCommand { get; }
+    public ICommand retrieveFiles { get; }
     
     public DirectoryMap(DirectoryService directoryService, AuthenticationService authService, FileService fileService)
     {
@@ -77,7 +94,8 @@ public class DirectoryMap : INotifyPropertyChanged
         
         clickDirectoryCommand = new Command<ShownFiles>(directoryClicked);
         backButtonCommand = new Command(clickBackDirectory);
-        
+        removeFilesCommand = new Command<ShownFiles>(RemoveFile);
+        retrieveFiles = new Command(RetrieveFiles);
         // Load the root directory on startup
         MainThread.BeginInvokeOnMainThread(async () => await LoadCurrentDirectory());
     }
@@ -131,11 +149,47 @@ public class DirectoryMap : INotifyPropertyChanged
             }
             
             // Update back button visibility
-            UpdateButtonVisibility();
+            UpdateBackButtonVisibility();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading directory: {ex.Message}");
+        }
+    }
+
+    // Same logic as the send files i just dont know the download flow to implemement it 
+    // also this along with the majority of the retrieving functions and commands can be moved 
+    // but i see a deleting file warning in FileDownloads so i have it here 
+    
+    private async void RetrieveFiles()
+    {
+        // Verify authentication
+        if (!_authService.IsLoggedIn)
+        {
+            Console.WriteLine("Error Sending File: Not authenticated. Please log in first.");
+            return;
+        }
+        
+        string userId = _authService.CurrentUser?.Id;
+        if (string.IsNullOrEmpty(userId))
+        {
+            Console.WriteLine("Error Sending File: User ID is missing.");
+            return;
+        }
+        
+        foreach (var file in QueuedFiles)
+        {
+            try
+            {
+                // Download based of itemId 
+                // Remove(file) to remove from queue
+                // move it to a predetermined FileLink storage place for the user retrivals 
+                // probably just a desktop/download folder we can move the downloaded file to 
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"Error Sending File: {ex.Message}");
+            }
         }
     }
     
@@ -158,9 +212,24 @@ public class DirectoryMap : INotifyPropertyChanged
         }
         else
         {
+            QueuedFiles.Add(file);
+            UpdateRetrieveButtonVisibility();
             // Here you could implement file preview or download
             Console.WriteLine($"File clicked: {file.fileName}");
         }
+    }
+    
+    private void RemoveFile(ShownFiles file)
+    {
+        if (file == null)
+            return;
+        QueuedFiles.Remove(file);
+        UpdateRetrieveButtonVisibility();
+    }
+    
+    private void UpdateRetrieveButtonVisibility()
+    {
+        IsRetrieveButtonVisible = QueuedFiles.Count > 0; 
     }
     
     // Go back to parent directory
@@ -202,10 +271,10 @@ public class DirectoryMap : INotifyPropertyChanged
     }
     
     // Update back button visibility
-    private void UpdateButtonVisibility()
+    private void UpdateBackButtonVisibility()
     {
         // Show back button if not at root
-        IsButtonVisible = _currentDirectoryId != null;
+        IsBackButtonVisible = _currentDirectoryId != null;
     }
     
     private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
