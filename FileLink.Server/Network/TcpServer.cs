@@ -40,6 +40,7 @@ namespace FileLink.Server.Network
             
             // Create the TCP listener
             _listener = new TcpListener(IPAddress.Any, _port);
+            _listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
         }
         
         // Starts a TCP server to listen for client connections 

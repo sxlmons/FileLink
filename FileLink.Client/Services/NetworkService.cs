@@ -121,5 +121,27 @@ namespace FileLink.Client.Services
                 return null;
             }
         }
+        
+        // Call this method when disconnection is detected or during logout
+        // FIX for logout issue
+        public void ResetConnection()
+        {
+            // Dispose existing connection if any
+            if (_client != null)
+            {
+                try
+                {
+                    _client.Close();
+                    _client.Dispose();
+                }
+                catch { /* Ignore errors during cleanup */ }
+                finally
+                {
+                    _client = null;
+                    _stream = null;
+                    _isConnected = false;
+                }
+            }
+        }
     }
 }
