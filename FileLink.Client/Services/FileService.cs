@@ -213,6 +213,59 @@ public class FileService
         
         // ... Download functionality ...
         
+        public async Task<(bool Success, string FilePath)> DownloadFileAsync(string fileId, string? destinationPath, string userId, Action<int, int>? progressCallback = null)
+        {
+            try
+            {
+                // Step 1: Initialize download
+                var initResponse = await InitializeDownloadAsync(fileId, userId);
+                
+                if (initResponse == null)
+                    return (false, string.Empty);
+
+                string fileName = initResponse.FileName;
+                long fileSize = initResponse.FileSize;
+                int totalChunks = initResponse.TotalChunks;
+
+                // If no specific path is provided, use a default downloads folder
+                if (string.IsNullOrEmpty(destinationPath))
+                {
+                    string downloadsFolder = Path.Combine(FileSystem.CacheDirectory, "Downloads");
+                    destinationPath = Path.Combine(downloadsFolder, fileName);
+                }
+
+                // Create destination directory if it doesn't exist
+                string? directory = Path.GetDirectoryName(destinationPath);
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                    Directory.CreateDirectory(directory);
+
+                // Step 2: Download file chunks
+                using (var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write))
+                {
+                    for (int chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++)
+                    {
+                        var chunk = await DownloadChunkAsync(fileId, chunkIndex, userId);
+                        
+                        if (chunk == null)
+                            return (false, string.Empty);
+
+                        await fileStream.WriteAsync(chunk, 0, chunk.Length);
+                        progressCallback?.Invoke(chunkIndex + 1, totalChunks);
+                    }
+                }
+
+                // Step 3: Complete the download
+                bool completed = await CompleteDownloadAsync(fileId, userId);
+                
+                return (completed, destinationPath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error downloading file: {ex.Message}");
+                return (false, string.Empty);
+            }
+        }
+        
         private async Task<DownloadInitResponse?> InitializeDownloadAsync(string fileId, string userId)
         {
             try

@@ -78,6 +78,62 @@ public class DirectoryMap : INotifyPropertyChanged
         }
     }
     
+    private bool _isDownloading;
+    public bool IsDownloading
+    {
+        get => _isDownloading;
+        set
+        {
+            if (_isDownloading != value)
+            {
+                _isDownloading = value;
+                NotifyPropertyChanged();
+            }
+        }
+    }
+
+    private int _currentDownloadProgress;
+    public int CurrentDownloadProgress
+    {
+        get => _currentDownloadProgress;
+        set
+        {
+            if (_currentDownloadProgress != value)
+            {
+                _currentDownloadProgress = value;
+                NotifyPropertyChanged();
+            }
+        }
+    }
+
+    private int _totalDownloadProgress;
+    public int TotalDownloadProgress
+    {
+        get => _totalDownloadProgress;
+        set
+        {
+            if (_totalDownloadProgress != value)
+            {
+                _totalDownloadProgress = value;
+                NotifyPropertyChanged();
+            }
+        }
+    }
+
+    private string _currentDownloadFile = string.Empty;
+    public string CurrentDownloadFile
+    {
+        get => _currentDownloadFile;
+        set
+        {
+            if (_currentDownloadFile != value)
+            {
+                _currentDownloadFile = value;
+                NotifyPropertyChanged();
+            }
+        }
+    }
+    
     public ICommand createDirectory { get; }
     public ICommand clickDirectoryCommand { get; }
     public ICommand backButtonCommand { get; }
@@ -163,35 +219,123 @@ public class DirectoryMap : INotifyPropertyChanged
     // also this along with the majority of the retrieving functions and commands can be moved 
     // but i see a deleting file warning in FileDownloads so i have it here 
     
+    // Handles file downloading for queued files
     private async Task RetrieveFiles()
     {
         // Verify authentication
         if (!_authService.IsLoggedIn)
         {
-            Console.WriteLine("Error Sending File: Not authenticated. Please log in first.");
+            await Application.Current.MainPage.DisplayAlert(
+                "Error", 
+                "Not authenticated. Please log in first.", 
+                "OK");
             return;
         }
         
         string userId = _authService.CurrentUser?.Id;
         if (string.IsNullOrEmpty(userId))
         {
-            Console.WriteLine("Error Sending File: User ID is missing.");
+            await Application.Current.MainPage.DisplayAlert(
+                "Error", 
+                "User ID is missing.", 
+                "OK");
             return;
         }
         
-        foreach (var file in QueuedFiles)
+        // Force the downloads folder as the destination for now
+        string downloadsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+        if (string.IsNullOrEmpty(downloadsFolder))
         {
-            try
+            downloadsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+        }
+
+        IsDownloading = true;
+        TotalDownloadProgress = QueuedFiles.Count;
+        CurrentDownloadProgress = 0;
+        
+        try
+        {
+            List<ShownFiles> downloadedFiles = new List<ShownFiles>();
+
+            foreach (var file in QueuedFiles)
             {
-                // Download based of itemId 
-                // Remove(file) to remove from queue
-                // move it to a predetermined FileLink storage place for the user retrivals 
-                // probably just a desktop/download folder we can move the downloaded file to 
+                try
+                {
+                    if (string.IsNullOrEmpty(file.ItemId))
+                    {
+                        continue;
+                    }
+                    
+                    CurrentDownloadFile = file.fileName;
+
+                    // Download the file
+                    string destinationPath = Path.Combine(downloadsFolder, file.fileName);
+                    
+                    var (success, filePath) = await _fileService.DownloadFileAsync(
+                        file.ItemId, 
+                        destinationPath, 
+                        userId,
+                        (current, total) => {
+                            // Update progress if needed - can be used to update a progress bar
+                            MainThread.BeginInvokeOnMainThread(() => {
+                                // Could add more detailed progress here if needed
+                            });
+                        });
+
+                    if (success)
+                    {
+                        // Add to the list of successfully downloaded files
+                        downloadedFiles.Add(file);
+                    }
+                    else
+                    {
+                        MainThread.BeginInvokeOnMainThread(async () => {
+                            await Application.Current.MainPage.DisplayAlert(
+                                "Download Error", 
+                                $"Failed to download {file.fileName}", 
+                                "OK");
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MainThread.BeginInvokeOnMainThread(async () => {
+                        await Application.Current.MainPage.DisplayAlert(
+                            "Error", 
+                            $"Error downloading {file.fileName}: {ex.Message}", 
+                            "OK");
+                    });
+                }
+            
+                CurrentDownloadProgress++;
             }
-            catch(Exception ex)
+
+            // Remove successfully downloaded files from the queue
+            foreach (var file in downloadedFiles)
             {
-                Console.WriteLine($"Error Sending File: {ex.Message}");
+                QueuedFiles.Remove(file);
             }
+
+            UpdateRetrieveButtonVisibility();
+            
+            // Display a list of downloaded files if there are any
+            if (downloadedFiles.Any())
+            {
+                string downloadedFileNames = string.Join(Environment.NewLine, downloadedFiles.Select(f => f.fileName));
+                await Application.Current.MainPage.DisplayAlert(
+                    "Download Complete", 
+                    $"The following files have been downloaded:\n{downloadedFileNames}", 
+                    "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert("Error", $"Download error: {ex.Message}", "OK");
+        }
+        finally
+        {
+            IsDownloading = false;
+            CurrentDownloadFile = string.Empty;
         }
     }
     
