@@ -83,4 +83,14 @@ public partial class MainPage : ContentPage
             LogoutButton.IsEnabled = true;
         }
     }
+    
+    private void SearchBar_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        // Get the ViewModel and call the search method
+        if (BindingContext is MainViewModel viewModel)
+        {
+            // Use the search text from the search bar
+            viewModel.DirectoryVM.PerformSearch(e.NewTextValue);
+        }
+    }
 }

@@ -124,10 +124,10 @@
         
         <VerticalStackLayout Grid.Row="0" Margin="0,20,0,0">
         <!-- Search Bar  -->
-            <SearchBar Placeholder="Search..."
-                       BackgroundColor="White"
-                       HeightRequest="40"
-                       />
+        <SearchBar Placeholder="Search..."
+                   BackgroundColor="White"
+                   HeightRequest="40"
+                   TextChanged="SearchBar_TextChanged"/>
             
             <!-- Create Folder Button -->
             <Grid Margin="15,10,15,0">

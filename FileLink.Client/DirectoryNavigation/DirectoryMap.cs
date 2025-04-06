@@ -50,6 +50,9 @@ public class DirectoryMap : INotifyPropertyChanged
     public ObservableCollection<ShownFiles> Files { get; set; } = new();
     public ObservableCollection<ShownFiles> QueuedFiles { get; set; } = new();
     
+    private ObservableCollection<ShownFiles> _allFiles = new(); // Stores all files before filtering
+
+    
     private bool _isRetrieveButtonVisible;
     public bool IsRetrieveButtonVisible
     {
@@ -134,6 +137,22 @@ public class DirectoryMap : INotifyPropertyChanged
         }
     }
     
+    private string _searchText = string.Empty;
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (_searchText != value)
+            {
+                _searchText = value;
+                NotifyPropertyChanged();
+                FilterFiles();
+            }
+        }
+    }
+
+    
     public ICommand createDirectory { get; }
     public ICommand clickDirectoryCommand { get; }
     public ICommand backButtonCommand { get; }
@@ -158,6 +177,38 @@ public class DirectoryMap : INotifyPropertyChanged
         MainThread.BeginInvokeOnMainThread(async () => await LoadCurrentDirectory());
     }
     
+    // filter files
+    private void FilterFiles()
+    {
+        if (string.IsNullOrWhiteSpace(_searchText))
+        {
+            // If search is empty, show all files
+            Files.Clear();
+            foreach (var file in _allFiles)
+            {
+                Files.Add(file);
+            }
+        }
+        else
+        {
+            // Filter files based on search text (case insensitive)
+            Files.Clear();
+            foreach (var file in _allFiles)
+            {
+                if (file.fileName.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
+                {
+                    Files.Add(file);
+                }
+            }
+        }
+    }
+    
+    // perform search
+    public void PerformSearch(string searchText)
+    {
+        SearchText = searchText;
+    }
+    
     // Load and display contents of current directory
     public async Task LoadCurrentDirectory()
     {
@@ -178,34 +229,45 @@ public class DirectoryMap : INotifyPropertyChanged
         {
             // Clear existing items
             Files.Clear();
-            
+            _allFiles.Clear(); // Clear the all files collection too
+        
             // Get contents from the server
             var (files, directories) = await _directoryService.GetDirectoryContentsAsync(_currentDirectoryId, userId);
-            
+        
             // Add directories first
             foreach (var dir in directories)
             {
-                Files.Add(new ShownFiles
+                var shownDir = new ShownFiles
                 {
                     fileName = dir.Name,
                     pngType = "folder.png",
                     ItemId = dir.Id,
                     IsDirectory = true
-                });
+                };
+                Files.Add(shownDir);
+                _allFiles.Add(shownDir); // Also add to unfiltered collection
             }
-            
+        
             // Then add files
             foreach (var file in files)
             {
-                Files.Add(new ShownFiles
+                var shownFile = new ShownFiles
                 {
                     fileName = file.FileName,
                     pngType = "file.png",
                     ItemId = file.Id,
                     IsDirectory = false
-                });
+                };
+                Files.Add(shownFile);
+                _allFiles.Add(shownFile); // Also add to unfiltered collection
             }
-            
+        
+            // Apply any current search filter
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                FilterFiles();
+            }
+        
             // Update back button visibility
             UpdateBackButtonVisibility();
         }
