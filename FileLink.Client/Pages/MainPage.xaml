@@ -69,12 +69,6 @@
                             BackgroundColor="Transparent"
                             TextColor="White"
                             HorizontalOptions="Start" />
-
-                    <Button Text="Create Directory" 
-                            BackgroundColor="Transparent"
-                            TextColor="White"
-                            HorizontalOptions="Start" 
-                            Command="{Binding DirectoryVM.createDirectory}"/>
                     
                 </VerticalStackLayout>
             </VerticalStackLayout>
@@ -135,9 +129,26 @@
                        HeightRequest="40"
                        />
             
+            <!-- Create Folder Button -->
+            <Grid Margin="15,10,15,0">
+                <Button Text="Create Folder" 
+                        BackgroundColor="#4C3B8A" 
+                        TextColor="White"
+                        Command="{Binding DirectoryVM.createDirectory}"
+                        HorizontalOptions="Start"
+                        WidthRequest="150">
+                    <Button.Shadow>
+                        <Shadow Brush="Black" 
+                                Radius="10" 
+                                Opacity="0.5" 
+                                Offset="2,2"/>
+                    </Button.Shadow>
+                </Button>
+            </Grid>
+            
             <!-- Directory Tab and Back Button -->
             <Grid ColumnDefinitions="Auto, *, Auto" Padding="15" Margin="0,8,0,0">
-                <Label Text="Directories"
+                <Label Text="My Files"
                        Grid.Column="0"
                        FontSize="26"
                        FontAttributes="Bold"

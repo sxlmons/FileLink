@@ -438,28 +438,37 @@ public class DirectoryMap : INotifyPropertyChanged
         {
             if (!_authService.IsLoggedIn)
             {
-                Console.WriteLine("User is not logged in. Cannot navigate.");
+                Console.WriteLine("User is not logged in. Cannot create directory.");
                 return;
             }
-            
+        
             string userId = _authService.CurrentUser?.Id;
+            if (string.IsNullOrEmpty(userId))
+            {
+                Console.WriteLine("User ID is missing. Cannot create directory.");
+                return;
+            }
 
             try
             {
-                var directory = await _directoryService.GetDirectoryByIdAsync(_currentDirectoryId, userId);
-                if (directory == null)
+                // Create the directory with the current directory as parent
+                var createdDir = await _directoryService.CreateDirectoryAsync(result, _currentDirectoryId, userId);
+            
+                if (createdDir != null)
                 {
-                    await _directoryService.CreateDirectoryAsync(result, null, userId);
-                    return;
+                    Console.WriteLine($"Directory created successfully: {result}");
                 }
-
-                await _directoryService.CreateDirectoryAsync(result, _currentDirectoryId, userId);
+                else
+                {
+                    Console.WriteLine($"Failed to create directory: {result}");
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error creating directory: {ex}");
             }
 
+            // Always reload the current directory to show the new folder
             try
             {
                 await LoadCurrentDirectory();
