@@ -179,41 +179,58 @@
                         </GridItemsLayout.Span>
                     </GridItemsLayout>
                 </CollectionView.ItemsLayout>
-                <CollectionView.ItemTemplate>
+               <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="{x:Type directoryNav:ShownFiles}">
-                        <VerticalStackLayout HorizontalOptions="Center"
-                                             VerticalOptions="Center">
-                            <!-- Image (file/folder) -->
-                            <Image Source="{Binding pngType}"
-                                   WidthRequest="125"
-                                   HeightRequest="125"
-                                   Aspect="AspectFit">
-                                <Image.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DirectoryVM.clickDirectoryCommand}"
-                                                          CommandParameter="{Binding .}"
-                                                          NumberOfTapsRequired="2">
-                                    </TapGestureRecognizer>
-                                </Image.GestureRecognizers>
-                                <Image.Shadow>
-                                    <Shadow Brush="Black"
-                                            Radius="15"
-                                            Opacity="0.6"
-                                            Offset="5,5"/>
-                                </Image.Shadow>
-                            </Image>
-                            <!-- File Name -->
-                            <Label Text="{Binding fileName}" 
-                                   TextColor="Black"
-                                   FontAttributes="Bold"
-                                   FontSize="16"
-                                   HorizontalTextAlignment="Center"
-                                   LineBreakMode="TailTruncation"/>
-                        </VerticalStackLayout>
+                        <Grid ColumnDefinitions="Auto,Auto" HorizontalOptions="Center" VerticalOptions="Center">
+                            <!-- Main content (image and name) -->
+                            <VerticalStackLayout Grid.Column="0" 
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center">
+                                <!-- Image (file/folder) -->
+                                <Image Source="{Binding pngType}"
+                                       WidthRequest="125"
+                                       HeightRequest="125"
+                                       Aspect="AspectFit">
+                                    <Image.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DirectoryVM.clickDirectoryCommand}"
+                                                              CommandParameter="{Binding .}"
+                                                              NumberOfTapsRequired="2">
+                                        </TapGestureRecognizer>
+                                    </Image.GestureRecognizers>
+                                    <Image.Shadow>
+                                        <Shadow Brush="Black"
+                                                Radius="15"
+                                                Opacity="0.6"
+                                                Offset="5,5"/>
+                                    </Image.Shadow>
+                                </Image>
+                                <!-- File Name -->
+                                <Label Text="{Binding fileName}" 
+                                       TextColor="Black"
+                                       FontAttributes="Bold"
+                                       FontSize="16"
+                                       HorizontalTextAlignment="Center"
+                                       LineBreakMode="TailTruncation"/>
+                            </VerticalStackLayout>
+                            
+                            <!-- Delete button (only for files, not directories) -->
+                            <Button Text="🗑️"
+                                    IsVisible="{Binding IsDirectory, Converter={StaticResource InverseBoolConverter}}"
+                                    BackgroundColor="Transparent"
+                                    TextColor="Red"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DirectoryVM.deleteFileCommand}"
+                                    CommandParameter="{Binding .}"
+                                    Grid.Column="1"
+                                    VerticalOptions="Start"
+                                    HorizontalOptions="End"
+                                    HeightRequest="30"
+                                    WidthRequest="30"
+                                    Margin="0,-10,-10,0"/>
+                        </Grid>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
         </VerticalStackLayout>
-        
     </ScrollView>
     </Grid>
 </Grid>
