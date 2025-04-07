@@ -159,6 +159,7 @@ public class DirectoryMap : INotifyPropertyChanged
     public ICommand removeFilesCommand { get; }
     public ICommand retrieveFiles { get; }
     public ICommand deleteFileCommand { get; }
+    public ICommand refreshCommand { get; }
     
     public DirectoryMap(DirectoryService directoryService, AuthenticationService authService, FileService fileService)
     {
@@ -175,6 +176,7 @@ public class DirectoryMap : INotifyPropertyChanged
         retrieveFiles = new Command(async () => await RetrieveFiles());
         createDirectory = new Command(async () => await CreateDirectory());
         deleteFileCommand = new Command<ShownFiles>(DeleteFile);
+        refreshCommand = new Command(async () => await RefreshCurrentDirectory());
 
         // Load the root directory on startup
         MainThread.BeginInvokeOnMainThread(async () => await LoadCurrentDirectory());
@@ -210,6 +212,31 @@ public class DirectoryMap : INotifyPropertyChanged
     public void PerformSearch(string searchText)
     {
         SearchText = searchText;
+    }
+    
+    private async Task RefreshCurrentDirectory()
+    {
+        try
+        {
+            // Show a brief loading indicator when I have time
+            // We could add a loading indicator property to show during refresh
+        
+            // Just reload the current directory
+            await LoadCurrentDirectory();
+        
+            // Optionally show a brief success message
+            await Application.Current.MainPage.DisplayAlert(
+                "Refreshed", 
+                "Directory contents updated", 
+                "OK");
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert(
+                "Error", 
+                $"Failed to refresh directory: {ex.Message}", 
+                "OK");
+        }
     }
     
     // Load and display contents of current directory
