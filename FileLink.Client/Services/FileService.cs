@@ -384,6 +384,39 @@ public class FileService
             }
         }
 
+        // Delete file 
+        public async Task<bool> DeleteFileAsync(string fileId, string userId)
+        {
+            try
+            {
+                // Create the file delete request packet
+                var packet = new Packet(Commands.CommandCode.FILE_DELETE_REQUEST)
+                {
+                    UserId = userId
+                };
+
+                packet.Metadata["FileId"] = fileId;
+
+                // Send the packet and get the response
+                var response = await _networkService.SendAndReceiveAsync(packet);
+
+                if (response == null || response.CommandCode == Commands.CommandCode.ERROR)
+                    return false;
+
+                if (response.Payload == null || response.Payload.Length == 0)
+                    return false;
+
+                // Deserialize the response
+                var deleteResponse = JsonSerializer.Deserialize<DeleteFileResponse>(response.Payload);
+
+                return deleteResponse?.Success ?? false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting file: {ex.Message}");
+                return false;
+            }
+        }
 
 
         private string GetContentType(string fileName)
