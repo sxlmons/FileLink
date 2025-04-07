@@ -158,6 +158,7 @@ public class DirectoryMap : INotifyPropertyChanged
     public ICommand backButtonCommand { get; }
     public ICommand removeFilesCommand { get; }
     public ICommand retrieveFiles { get; }
+    public ICommand deleteFileCommand { get; }
     
     public DirectoryMap(DirectoryService directoryService, AuthenticationService authService, FileService fileService)
     {
@@ -173,6 +174,8 @@ public class DirectoryMap : INotifyPropertyChanged
         removeFilesCommand = new Command<ShownFiles>(RemoveFile);
         retrieveFiles = new Command(async () => await RetrieveFiles());
         createDirectory = new Command(async () => await CreateDirectory());
+        deleteFileCommand = new Command<ShownFiles>(DeleteFile);
+
         // Load the root directory on startup
         MainThread.BeginInvokeOnMainThread(async () => await LoadCurrentDirectory());
     }
@@ -274,6 +277,55 @@ public class DirectoryMap : INotifyPropertyChanged
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading directory: {ex.Message}");
+        }
+    }
+    
+    // File deletion implementation
+    private async void DeleteFile(ShownFiles file)
+    {
+        if (file == null || file.IsDirectory) return;
+    
+        bool confirm = await Application.Current.MainPage.DisplayAlert(
+            "Confirm Delete", 
+            $"Are you sure you want to delete {file.fileName}?", 
+            "Delete", "Cancel");
+        
+        if (!confirm) return;
+    
+        try
+        {
+            string userId = _authService.CurrentUser?.Id;
+            if (string.IsNullOrEmpty(userId))
+                return;
+            
+            // Call FileService to delete the file
+            bool success = await _fileService.DeleteFileAsync(file.ItemId, userId);
+        
+            if (success)
+            {
+                // Remove from display
+                Files.Remove(file);
+                _allFiles.Remove(file);
+            
+                await Application.Current.MainPage.DisplayAlert(
+                    "Success", 
+                    $"{file.fileName} was deleted successfully.", 
+                    "OK");
+            }
+            else
+            {
+                await Application.Current.MainPage.DisplayAlert(
+                    "Error", 
+                    $"Failed to delete {file.fileName}.", 
+                    "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert(
+                "Error", 
+                $"Error deleting file: {ex.Message}", 
+                "OK");
         }
     }
 
