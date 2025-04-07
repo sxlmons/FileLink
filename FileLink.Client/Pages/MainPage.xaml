@@ -129,13 +129,20 @@
                    HeightRequest="40"
                    TextChanged="SearchBar_TextChanged"/>
             
-            <!-- Create Folder Button -->
+            <!-- Directory Tab, create folder and Back Button -->
             <Grid Margin="15,10,15,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+        
                 <Button Text="Create Folder" 
                         BackgroundColor="#4C3B8A" 
                         TextColor="White"
                         Command="{Binding DirectoryVM.createDirectory}"
                         HorizontalOptions="Start"
+                        Grid.Column="0"
                         WidthRequest="150">
                     <Button.Shadow>
                         <Shadow Brush="Black" 
@@ -144,20 +151,22 @@
                                 Offset="2,2"/>
                     </Button.Shadow>
                 </Button>
-            </Grid>
-            
-            <!-- Directory Tab and Back Button -->
-            <Grid ColumnDefinitions="Auto, *, Auto" Padding="15" Margin="0,8,0,0">
-                <Label Text="My Files"
-                       Grid.Column="0"
-                       FontSize="26"
-                       FontAttributes="Bold"
-                       TextColor="#333"/>
-                <BoxView BackgroundColor="Transparent" Grid.Column="1"/>
-                <Button Text="BACK"
-                        Command="{Binding DirectoryVM.backButtonCommand}"
-                        IsVisible="{Binding DirectoryVM.IsBackButtonVisible}"
-                        Grid.Column="2"/>
+        
+                <Button Text="Refresh" 
+                        BackgroundColor="#4C3B8A" 
+                        TextColor="White"
+                        Command="{Binding DirectoryVM.refreshCommand}"
+                        HorizontalOptions="Start"
+                        Grid.Column="1"
+                        Margin="10,0,0,0"
+                        WidthRequest="120">
+                    <Button.Shadow>
+                        <Shadow Brush="Black" 
+                                Radius="10" 
+                                Opacity="0.5" 
+                                Offset="2,2"/>
+                    </Button.Shadow>
+                </Button>
             </Grid>
         </VerticalStackLayout>
 
