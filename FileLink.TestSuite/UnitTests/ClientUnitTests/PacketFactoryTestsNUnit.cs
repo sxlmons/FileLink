@@ -23,10 +23,10 @@ public class PacketFactoryTestsNUnit
             var packet = _packetFactory.CreateAccountCreationRequest("user", "pass", "email@example.com");
             Assert.That(Commands.CommandCode.CREATE_ACCOUNT_REQUEST, Is.EqualTo(packet.CommandCode) );
 
-            var json = Encoding.UTF8.GetString(packet.Payload);
-            StringAssert.Contains("user", json);
-            StringAssert.Contains("pass", json);
-            StringAssert.Contains("email@example.com", json);
+            var obj = JsonSerializer.Deserialize<Dictionary<string, string>>(packet.Payload);
+            Assert.That(obj["Username"], Is.EqualTo("user"));
+            Assert.That(obj["Password"], Is.EqualTo("pass"));
+            Assert.That(obj["Email"], Is.EqualTo("email@example.com"));
         }
 
         [Test]
@@ -35,9 +35,9 @@ public class PacketFactoryTestsNUnit
             var packet = _packetFactory.CreateLoginRequest("user", "pass");
             Assert.That(Commands.CommandCode.LOGIN_REQUEST, Is.EqualTo(packet.CommandCode));
 
-            var json = Encoding.UTF8.GetString(packet.Payload);
-            StringAssert.Contains("user", json);
-            StringAssert.Contains("pass", json);
+            var obj = JsonSerializer.Deserialize<Dictionary<string, string>>(packet.Payload);
+            Assert.That(obj["Username"], Is.EqualTo("user"));
+            Assert.That(obj["Password"], Is.EqualTo("pass"));
         }
 
         [Test]
@@ -109,14 +109,16 @@ public class PacketFactoryTestsNUnit
         {
             var packet = _packetFactory.CreateFileUploadInitRequest("uid", "file.txt", 12345, "text/plain");
 
-            Assert.That(Commands.CommandCode.FILE_UPLOAD_INIT_REQUEST, Is.EqualTo(packet.CommandCode));
-            Assert.That("uid", Is.EqualTo(packet.UserId));
-            Assert.That("file.txt", Is.EqualTo(packet.Metadata["FileName"]));
-            Assert.That("12345", Is.EqualTo(packet.Metadata["FileSize"]));
-            Assert.That("text/plain", Is.EqualTo(packet.Metadata["ContentType"]));
+            Assert.That(packet.CommandCode, Is.EqualTo(Commands.CommandCode.FILE_UPLOAD_INIT_REQUEST));
+            Assert.That(packet.UserId, Is.EqualTo("uid"));
+            Assert.That(packet.Metadata["FileName"], Is.EqualTo("file.txt"));
+            Assert.That(packet.Metadata["FileSize"], Is.EqualTo("12345"));
+            Assert.That(packet.Metadata["ContentType"], Is.EqualTo("text/plain"));
 
-            var json = Encoding.UTF8.GetString(packet.Payload);
-            StringAssert.Contains("file.txt", json);
+            var obj = JsonSerializer.Deserialize<Dictionary<string, Object>>(packet.Payload);
+            Assert.That(obj["FileName"].ToString(), Is.EqualTo("file.txt"));
+            Assert.That(obj["FileSize"].ToString(), Is.EqualTo("12345"));
+            Assert.That(obj["ContentType"].ToString(), Is.EqualTo("text/plain"));
         }
 
         [Test]
