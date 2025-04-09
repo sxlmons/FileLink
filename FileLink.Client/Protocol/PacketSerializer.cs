@@ -178,7 +178,7 @@ namespace FileLink.Client.Protocol
                 int payloadLength = reader.ReadInt32();
                 if (payloadLength > 0)
                 {
-                    bool encryptedCommands = packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_CHUNK_REQUEST;
+                    bool encryptedCommands = packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_CHUNK_REQUEST;
                     
                     byte[] tempData = reader.ReadBytes(payloadLength);
                     

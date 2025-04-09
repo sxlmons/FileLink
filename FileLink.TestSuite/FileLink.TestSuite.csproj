@@ -15,19 +15,20 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting"/>
+        <PackageReference Include="MSTest.TestAdapter" Version="3.6.4" />
+        <PackageReference Include="MSTest.TestFramework" Version="3.6.4" />
     </ItemGroup>
-
+    
     <ItemGroup>
       <Folder Include="IntegrationTests\" />
       <Folder Include="SystemTesting\" />
-      <Folder Include="UnitTests\ClientUnitTests\" />
       <Folder Include="UnitTests\ServerUnitTests\" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\FileLink.Server\FileLink.Server.csproj" />
         <ProjectReference Include="..\FileLink.Client\FileLink.Client.csproj" />
+        <ProjectReference Include="..\FileLink.Shared\FileLink.Shared.csproj" />
     </ItemGroup>
 
 </Project>
