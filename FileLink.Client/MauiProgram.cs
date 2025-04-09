@@ -43,6 +43,8 @@ namespace FileLink.Client
             builder.Services.AddTransient<FilesView>();
             builder.Services.AddTransient<AccountView>();
             builder.Services.AddTransient<StorageView>();
+            builder.Services.AddTransient<SettingsView>();
+            builder.Services.AddTransient<HomeView>();
 
 #if DEBUG
             builder.Logging.AddDebug();

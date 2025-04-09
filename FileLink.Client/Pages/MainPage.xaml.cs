@@ -17,7 +17,8 @@ public partial class MainPage : ContentPage
         Home,
         Files,
         Account,
-        Storage
+        Storage,
+        Settings
     }
     
     // Keep track of the current section
@@ -28,11 +29,7 @@ public partial class MainPage : ContentPage
     private readonly Color _unselectedBackgroundColor = Colors.Transparent;
     private readonly Color _textColor = Colors.White;
     
-    public MainPage(
-        AuthenticationService authService, 
-        NetworkService networkService, 
-        FileService fileService,
-        DirectoryService directoryService)
+    public MainPage(AuthenticationService authService, NetworkService networkService, FileService fileService, DirectoryService directoryService)
     {
         InitializeComponent();
         
@@ -48,6 +45,9 @@ public partial class MainPage : ContentPage
         FilesContentView.BindingContext = BindingContext;
         AccountContentView.BindingContext = BindingContext;
         StorageContentView.BindingContext = BindingContext;
+        HomeContentView.BindingContext = BindingContext;
+        SettingsContentView.BindingContext = BindingContext;
+        
     }
     
     protected override void OnAppearing()
@@ -76,6 +76,8 @@ public partial class MainPage : ContentPage
         FilesContentView.IsVisible = false;
         AccountContentView.IsVisible = false;
         StorageContentView.IsVisible = false;
+        HomeContentView.IsVisible = false;
+        SettingsContentView.IsVisible = false;
         
         // Save the current section
         _currentSection = section;
@@ -87,6 +89,8 @@ public partial class MainPage : ContentPage
         switch (section)
         {
             case NavigationSection.Home:
+                HomeContentView.IsVisible = true;
+                break;
             case NavigationSection.Files:
                 FilesContentView.IsVisible = true;
                 break;
@@ -95,6 +99,9 @@ public partial class MainPage : ContentPage
                 break;
             case NavigationSection.Storage:
                 StorageContentView.IsVisible = true;
+                break;
+            case NavigationSection.Settings:
+                SettingsContentView.IsVisible = true;
                 break;
         }
     }
@@ -107,6 +114,7 @@ public partial class MainPage : ContentPage
         MyCloudButton.BackgroundColor = _unselectedBackgroundColor;
         StorageButton.BackgroundColor = _unselectedBackgroundColor;
         AccountButton.BackgroundColor = _unselectedBackgroundColor;
+        SettingsButton.BackgroundColor = _unselectedBackgroundColor;
         
         // Highlight the selected button
         switch (section)
@@ -123,10 +131,23 @@ public partial class MainPage : ContentPage
             case NavigationSection.Storage:
                 StorageButton.BackgroundColor = _selectedBackgroundColor;
                 break;
+            case NavigationSection.Settings:
+                SettingsButton.BackgroundColor = _selectedBackgroundColor;
+                break;
         }
     }
     
     // Navigation button click handlers
+    private void HomeButton_Clicked(object sender, EventArgs e)
+    {
+        NavigateTo(NavigationSection.Home);
+    }
+    
+    private void SettingsButton_Clicked(object sender, EventArgs e)
+    {
+        NavigateTo(NavigationSection.Settings);
+    }
+    
     private void MyCloudButton_Clicked(object sender, EventArgs e)
     {
         NavigateTo(NavigationSection.Files);

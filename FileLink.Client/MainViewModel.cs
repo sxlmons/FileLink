@@ -11,10 +11,7 @@ public class MainViewModel
     public DirectoryMap DirectoryVM { get; set; }
     
     // Take services as parameters instead of creating new instances
-    public MainViewModel(
-        FileService fileService, 
-        AuthenticationService authService, 
-        DirectoryService directoryService)
+    public MainViewModel(FileService fileService, AuthenticationService authService, DirectoryService directoryService)
     {
         // Initialize directory navigation with the right service
         // This will need to be updated to use DirectoryService too

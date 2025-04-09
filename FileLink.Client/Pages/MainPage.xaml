@@ -90,7 +90,7 @@
                                 StrokeThickness="0"
                                 StrokeShape="RoundRectangle 8">
                             <Border.GestureRecognizers>
-                                <TapGestureRecognizer />
+                                <TapGestureRecognizer Tapped="HomeButton_Clicked"/>
                             </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="Auto,*,Auto"
                                   ColumnSpacing="12"
@@ -268,6 +268,9 @@
                                 Padding="12,0"
                                 StrokeThickness="0"
                                 StrokeShape="RoundRectangle 8">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="SettingsButton_Clicked" />
+                            </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="Auto,*"
                                   ColumnSpacing="12"
                                   HorizontalOptions="Fill"
@@ -378,6 +381,8 @@
             <views:FilesView x:Name="FilesContentView" IsVisible="True" />
             <views:AccountView x:Name="AccountContentView" IsVisible="False" />
             <views:StorageView x:Name="StorageContentView" IsVisible="False" />
+            <views:StorageView x:Name="HomeContentView" IsVisible="False" />
+            <views:StorageView x:Name="SettingsContentView" IsVisible="False" />
         </Grid>
     </Grid>
 </ContentPage>
