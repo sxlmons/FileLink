@@ -15,7 +15,7 @@
        - Column 2: Right-hand panel (Add New Files, Storage, Favourites)-->
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220" />  <!-- Side Nav -->
+            <ColumnDefinition Width="280" />  <!-- Side Nav -->
             <ColumnDefinition Width="*" />    <!-- Main Content -->
         </Grid.ColumnDefinitions>
 
@@ -29,9 +29,10 @@
                 <!-- App Title / Logo -->
                 <Label 
                     Text="FileLink"
-                    FontAttributes="Bold"
-                    FontSize="28"
+                    FontFamily="InterBold"
+                    FontSize="56"
                     TextColor="White"
+                    HorizontalOptions="Center"
                     Margin="0,30,0,0"/>
                 
                 <!-- User Profile Section -->
@@ -62,16 +63,29 @@
                 <VerticalStackLayout Spacing="10">
                     <Button x:Name="MyCloudButton"
                             Text="My Cloud" 
-                            BackgroundColor="Transparent"
+                            BackgroundColor="#5E5197"
                             TextColor="White"
-                            HorizontalOptions="Start" 
+                            FontFamily="InterMedium"
+                            FontSize="16"
+                            HorizontalOptions="Fill" 
                             Clicked="MyCloudButton_Clicked"/>
+                    
+                    <Button x:Name="StorageButton"
+                            Text="Storage" 
+                            BackgroundColor="#5E5197"
+                            TextColor="White"
+                            FontFamily="InterMedium"
+                            FontSize="16"
+                            HorizontalOptions="Fill"
+                            Clicked="StorageButton_Clicked"/>
 
                     <Button x:Name="FavouritesButton"
                             Text="Favourites" 
-                            BackgroundColor="Transparent"
+                            BackgroundColor="#5E5197"
                             TextColor="White"
-                            HorizontalOptions="Start" />
+                            FontFamily="InterMedium"
+                            FontSize="16"
+                            HorizontalOptions="FillAndExpand"/>
                     
                 </VerticalStackLayout>
             </VerticalStackLayout>
@@ -85,15 +99,10 @@
                         Text="Account" 
                         BackgroundColor="Transparent"
                         TextColor="White"
-                        HorizontalOptions="Start"
+                        FontFamily="InterMedium"
+                        FontSize="16"
+                        HorizontalOptions="Fill"
                         Clicked="AccountButton_Clicked"/>
-
-                <Button x:Name="StorageButton"
-                        Text="Storage" 
-                        BackgroundColor="Transparent"
-                        TextColor="White"
-                        HorizontalOptions="Start" 
-                        Clicked="StorageButton_Clicked"/>
                 
                 <!-- Logout Button -->
                 <Button 
@@ -104,7 +113,7 @@
                     BackgroundColor="#8175B5"
                     TextColor="White"
                     Clicked="LogoutButton_Clicked"
-                    HorizontalOptions="Start"
+                    HorizontalOptions="Fill"
                     Margin="0,20,0,0" />
                 
                 <!-- Status indicators for logout -->
@@ -119,7 +128,7 @@
                     x:Name="StatusLabel"
                     Text=""
                     TextColor="White"
-                    HorizontalOptions="Center"
+                    HorizontalOptions="Fill"
                     IsVisible="False" />
             </VerticalStackLayout>
         </Grid>
