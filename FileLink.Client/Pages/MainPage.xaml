@@ -60,10 +60,17 @@
                 </Frame>
 
                 <!-- Navigation Buttons -->
-                <VerticalStackLayout Spacing="10">
+                <VerticalStackLayout Spacing="5">
+                    <Button x:Name="Home"
+                            Text="Home" 
+                            TextColor="White"
+                            FontFamily="InterMedium"
+                            FontSize="16"
+                            BackgroundColor="#3B2D79"
+                            HorizontalOptions="Fill"/>
+                    
                     <Button x:Name="MyCloudButton"
                             Text="My Cloud" 
-                            BackgroundColor="#5E5197"
                             TextColor="White"
                             FontFamily="InterMedium"
                             FontSize="16"
@@ -72,21 +79,11 @@
                     
                     <Button x:Name="StorageButton"
                             Text="Storage" 
-                            BackgroundColor="#5E5197"
                             TextColor="White"
                             FontFamily="InterMedium"
                             FontSize="16"
                             HorizontalOptions="Fill"
                             Clicked="StorageButton_Clicked"/>
-
-                    <Button x:Name="FavouritesButton"
-                            Text="Favourites" 
-                            BackgroundColor="#5E5197"
-                            TextColor="White"
-                            FontFamily="InterMedium"
-                            FontSize="16"
-                            HorizontalOptions="FillAndExpand"/>
-                    
                 </VerticalStackLayout>
             </VerticalStackLayout>
             
@@ -103,6 +100,14 @@
                         FontSize="16"
                         HorizontalOptions="Fill"
                         Clicked="AccountButton_Clicked"/>
+                
+                <Button x:Name="SettingsButton"
+                        Text="Account" 
+                        BackgroundColor="Transparent"
+                        TextColor="White"
+                        FontFamily="InterMedium"
+                        FontSize="16"
+                        HorizontalOptions="Fill"/>
                 
                 <!-- Logout Button -->
                 <Button 

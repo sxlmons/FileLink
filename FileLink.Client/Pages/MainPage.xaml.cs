@@ -95,9 +95,9 @@ public partial class MainPage : ContentPage
     private void UpdateNavigationButtons(NavigationSection section)
     {
         // Reset all buttons to default state
-        MyCloudButton.BackgroundColor = Color.FromArgb("#5E5197");
-        AccountButton.BackgroundColor = Color.FromArgb("#5E5197");
-        StorageButton.BackgroundColor = Color.FromArgb("#5E5197");
+        MyCloudButton.BackgroundColor = Colors.Transparent;
+        AccountButton.BackgroundColor = Colors.Transparent;
+        StorageButton.BackgroundColor = Colors.Transparent;
         
         // Highlight the selected button
         switch (section)
