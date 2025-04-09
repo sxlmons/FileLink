@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:directoryNav="clr-namespace:FileLink.Client.DirectoryNavigation"
+             xmlns:fileOperations="clr-namespace:FileLink.Client.FileOperations"
+             x:Class="FileLink.Client.Views.FilesView">
+    
+    <!-- Grid with two columns: Files area and Right sidebar -->
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />    <!-- Files area -->
+            <ColumnDefinition Width="270" />  <!-- Right Sidebar -->
+        </Grid.ColumnDefinitions>
+        
+        <!-- Main Content Grid (Left side) -->
+        <Grid Grid.Column="0" RowDefinitions="Auto, *">
+            <VerticalStackLayout Grid.Row="0" Margin="0,20,0,0">
+            <!-- Search Bar  -->
+            <SearchBar Placeholder="Search..."
+                      BackgroundColor="White"
+                      HeightRequest="40"
+                      TextChanged="SearchBar_TextChanged"/>
+                
+                <!-- Directory Tab, create folder and Back Button -->
+                <Grid Margin="15,10,15,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+            
+                    <Button Text="Create Folder" 
+                            BackgroundColor="#4C3B8A" 
+                            TextColor="White"
+                            Command="{Binding DirectoryVM.createDirectory}"
+                            HorizontalOptions="Start"
+                            Grid.Column="0"
+                            WidthRequest="150">
+                        <Button.Shadow>
+                            <Shadow Brush="Black" 
+                                    Radius="10" 
+                                    Opacity="0.5" 
+                                    Offset="2,2"/>
+                        </Button.Shadow>
+                    </Button>
+            
+                    <Button Text="Refresh" 
+                            BackgroundColor="#4C3B8A" 
+                            TextColor="White"
+                            Command="{Binding DirectoryVM.refreshCommand}"
+                            HorizontalOptions="Start"
+                            Grid.Column="1"
+                            Margin="10,0,0,0"
+                            WidthRequest="120">
+                        <Button.Shadow>
+                            <Shadow Brush="Black" 
+                                    Radius="10" 
+                                    Opacity="0.5" 
+                                    Offset="2,2"/>
+                        </Button.Shadow>
+                    </Button>
+                </Grid>
+            </VerticalStackLayout>
+
+            <!-- Scrollable Content -->
+            <ScrollView Grid.Row="1">
+                <VerticalStackLayout Spacing="20" Padding="20">
+                    <!-- CollectionView for Files (this part scrolls) -->
+                    <CollectionView ItemsSource="{Binding DirectoryVM.Files}" VerticalScrollBarVisibility="Always">
+                        <CollectionView.ItemsLayout>
+                            <GridItemsLayout Orientation="Vertical"
+                                             HorizontalItemSpacing="5"
+                                             VerticalItemSpacing="5">
+                                <GridItemsLayout.Span>
+                                    <OnIdiom x:TypeArguments="x:Int32">
+                                        <OnIdiom.Phone>5</OnIdiom.Phone>
+                                        <OnIdiom.Tablet>4</OnIdiom.Tablet>
+                                        <OnIdiom.Desktop>5</OnIdiom.Desktop>
+                                    </OnIdiom>
+                                </GridItemsLayout.Span>
+                            </GridItemsLayout>
+                        </CollectionView.ItemsLayout>
+                       <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="{x:Type directoryNav:ShownFiles}">
+                                <Grid ColumnDefinitions="Auto,Auto" HorizontalOptions="Center" VerticalOptions="Center">
+                                    <!-- Main content (image and name) -->
+                                    <VerticalStackLayout Grid.Column="0" 
+                                                       HorizontalOptions="Center"
+                                                       VerticalOptions="Center">
+                                        <!-- Image (file/folder) -->
+                                        <Image Source="{Binding pngType}"
+                                               WidthRequest="125"
+                                               HeightRequest="125"
+                                               Aspect="AspectFit">
+                                            <Image.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.DirectoryVM.clickDirectoryCommand}"
+                                                                      CommandParameter="{Binding .}"
+                                                                      NumberOfTapsRequired="2">
+                                                </TapGestureRecognizer>
+                                            </Image.GestureRecognizers>
+                                            <Image.Shadow>
+                                                <Shadow Brush="Black"
+                                                        Radius="15"
+                                                        Opacity="0.6"
+                                                        Offset="5,5"/>
+                                            </Image.Shadow>
+                                        </Image>
+                                        <!-- File Name -->
+                                        <Label Text="{Binding fileName}" 
+                                               TextColor="Black"
+                                               FontAttributes="Bold"
+                                               FontSize="16"
+                                               HorizontalTextAlignment="Center"
+                                               LineBreakMode="TailTruncation"/>
+                                    </VerticalStackLayout>
+                                    
+                                    <!-- Delete button (only for files, not directories) -->
+                                    <Button Text="🗑️"
+                                            IsVisible="{Binding IsDirectory, Converter={StaticResource InverseBoolConverter}}"
+                                            BackgroundColor="Transparent"
+                                            TextColor="Red"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.DirectoryVM.deleteFileCommand}"
+                                            CommandParameter="{Binding .}"
+                                            Grid.Column="1"
+                                            VerticalOptions="Start"
+                                            HorizontalOptions="End"
+                                            HeightRequest="30"
+                                            WidthRequest="30"
+                                            Margin="0,-10,-10,0"/>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </ScrollView>
+        </Grid>
+
+        <!-- RIGHT SIDEBAR -->
+        <ScrollView Padding="20" Grid.Column="1">
+            <Grid RowDefinitions="Auto, *, Auto">
+                <VerticalStackLayout Grid.Row="0" Spacing="20">
+                    <!-- Add New Files -->
+                    <Frame Padding="20" CornerRadius="10" BackgroundColor="White" Margin="0,17,0,0">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Add New Files" 
+                                   FontAttributes="Bold"
+                                   FontSize="16"/>
+                            <Button Text="Upload" 
+                                    BackgroundColor="#4C3B8A" 
+                                    TextColor="White"
+                                    Command="{Binding FileSelectorVM.AddFilesCommand}">
+                                <Button.Shadow>
+                                    <Shadow Brush="Black" 
+                                            Radius="10" 
+                                            Opacity="0.5" 
+                                            Offset="2,2"/>
+                                </Button.Shadow>
+                            </Button>
+                        </VerticalStackLayout>
+                    </Frame>
+                
+                    <!-- Upload Queue -->
+                    <Frame Padding="20" CornerRadius="10" BackgroundColor="White">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Sending Queue" 
+                                   FontAttributes="Bold"
+                                   FontSize="16"
+                                   VerticalTextAlignment="Center"
+                                   Margin="0,7,0,0"/>
+                                   
+                            <BoxView Color="#4C3B8A"
+                                     HeightRequest="2"
+                                     IsVisible="{Binding FileSelectorVM.IsButtonVisible}"
+                                     Margin="0,3,0,0"/>
+                                    
+                            <CollectionView ItemsSource="{Binding FileSelectorVM.Files}">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="{x:Type fileOperations:FilesSelected}">
+                                        <Grid ColumnDefinitions="*, Auto">
+                                            <Label Text="{Binding fileName}" 
+                                                   VerticalOptions="Center"
+                                                   Grid.Column="0"/> 
+                                        
+                                            <Button Text="X"
+                                                    Style="{x:Null}"
+                                                    BackgroundColor="Transparent"
+                                                    TextColor="Black"
+                                                    BorderWidth="0"
+                                                    CornerRadius="0"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.FileSelectorVM.RemoveFilesCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Grid.Column="1"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                            
+                            <Button Text="Send Files"
+                                    Command="{Binding FileSelectorVM.SendFilesCommand}"
+                                    IsVisible="{Binding FileSelectorVM.IsButtonVisible}"
+                                    BackgroundColor="#4C3B8A">
+                                <Button.Shadow>
+                                    <Shadow Brush="Black" 
+                                            Radius="10" 
+                                            Opacity="0.5" 
+                                            Offset="2,2"/>
+                                </Button.Shadow>
+                            </Button>
+                        </VerticalStackLayout>
+                    </Frame>
+
+                    <!-- Download Queue -->
+                    <Frame Padding="20" CornerRadius="10" BackgroundColor="White">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Download Queue" 
+                                   FontAttributes="Bold"
+                                   FontSize="16"
+                                   VerticalTextAlignment="Center"
+                                   Margin="0,7,0,0"/>
+                                    
+                            <BoxView Color="#4C3B8A"
+                                     HeightRequest="2"
+                                     IsVisible="{Binding DirectoryVM.IsRetrieveButtonVisible}"
+                                     Margin="0,3,0,0"/>
+                                         
+                            <CollectionView ItemsSource="{Binding DirectoryVM.QueuedFiles}">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="{x:Type directoryNav:ShownFiles}">
+                                        <Grid ColumnDefinitions="*, Auto">
+                                            <Label Text="{Binding fileName}" 
+                                                   VerticalOptions="Center"
+                                                   Grid.Column="0"/> 
+                                        
+                                            <Button Text="X"
+                                                    Style="{x:Null}"
+                                                    BackgroundColor="Transparent"
+                                                    TextColor="Black"
+                                                    BorderWidth="0"
+                                                    CornerRadius="0"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.DirectoryVM.removeFilesCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Grid.Column="1"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                            
+                            <!-- Download Progress (Visible only when downloading) -->
+                            <VerticalStackLayout IsVisible="{Binding DirectoryVM.IsDownloading}" 
+                                                 Spacing="5" 
+                                                 Margin="0,10,0,0">
+                                <Label Text="{Binding DirectoryVM.CurrentDownloadFile, StringFormat='Downloading: {0}'}" 
+                                       FontSize="12" />
+                                <ProgressBar Progress="{Binding DirectoryVM.CurrentDownloadProgress, Converter={StaticResource ProgressConverter}, ConverterParameter={Binding DirectoryVM.TotalDownloadProgress}}" />
+                                <Label Text="{Binding DirectoryVM.CurrentDownloadProgress, StringFormat='{0} of {1} files'}" 
+                                       FontSize="10" 
+                                       HorizontalOptions="End">
+                                    <Label.FormattedText>
+                                        <FormattedString>
+                                            <Span Text="{Binding DirectoryVM.CurrentDownloadProgress}" />
+                                            <Span Text=" of " />
+                                            <Span Text="{Binding DirectoryVM.TotalDownloadProgress}" />
+                                            <Span Text=" files" />
+                                        </FormattedString>
+                                    </Label.FormattedText>
+                                </Label>
+                            </VerticalStackLayout>
+                            
+                            <Button Text="Download Files"
+                                    Command="{Binding DirectoryVM.retrieveFiles}"
+                                    IsVisible="{Binding DirectoryVM.IsRetrieveButtonVisible}"
+                                    IsEnabled="{Binding DirectoryVM.IsDownloading, Converter={StaticResource InverseBoolConverter}}"
+                                    BackgroundColor="#4C3B8A">
+                                <Button.Shadow>
+                                    <Shadow Brush="Black" 
+                                            Radius="10" 
+                                            Opacity="0.5" 
+                                            Offset="2,2"/>
+                                </Button.Shadow>
+                            </Button>
+                        </VerticalStackLayout>
+                    </Frame>
+                </VerticalStackLayout>
+                
+                <BoxView BackgroundColor="Transparent"
+                         Grid.Row="1"/>
+
+                <!-- Storage Info -->
+                <Frame Padding="20" CornerRadius="10" BackgroundColor="White" Grid.Row="2">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Your Storage"
+                               FontAttributes="Bold" 
+                               FontSize="16"/>
+                        <Label Text="-- GB used of -- GB" FontSize="12"/>
+                        <ProgressBar Progress="0" />
+                        <Label Text="Storage information not available"
+                               FontSize="12"
+                               HorizontalOptions="End"/>
+                    </VerticalStackLayout>
+                </Frame>
+            </Grid>
+        </ScrollView>
+    </Grid>
+</ContentView>

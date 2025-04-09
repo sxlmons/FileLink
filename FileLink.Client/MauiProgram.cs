@@ -1,5 +1,6 @@
 ﻿using FileLink.Client.Pages;
 using FileLink.Client.Services;
+using FileLink.Client.Views;
 using Microsoft.Extensions.Logging;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 
@@ -34,6 +35,11 @@ namespace FileLink.Client
             // Register pages with transient scope
             builder.Services.AddTransient<LoginPage>();
             builder.Services.AddTransient<MainPage>();
+            
+            // Register content views
+            builder.Services.AddTransient<FilesView>();
+            builder.Services.AddTransient<AccountView>();
+            builder.Services.AddTransient<StorageView>();
 
 #if DEBUG
             builder.Logging.AddDebug();

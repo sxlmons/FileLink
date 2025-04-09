@@ -1,4 +1,5 @@
 ﻿using FileLink.Client.Services;
+using FileLink.Client.Views;
 
 namespace FileLink.Client.Pages;
 
@@ -8,6 +9,17 @@ public partial class MainPage : ContentPage
     private readonly NetworkService _networkService;
     private readonly FileService _fileService;
     private readonly DirectoryService _directoryService;
+    
+    // Enum to track the current navigation section
+    public enum NavigationSection
+    {
+        Files,
+        Account,
+        Storage
+    }
+    
+    // Keep track of the current section
+    private NavigationSection _currentSection = NavigationSection.Files;
     
     public MainPage(
         AuthenticationService authService, 
@@ -24,6 +36,11 @@ public partial class MainPage : ContentPage
         
         // Create view model with the authenticated services
         BindingContext = new MainViewModel(_fileService, _authService, _directoryService);
+        
+        // Set the binding context for each content view
+        FilesContentView.BindingContext = BindingContext;
+        AccountContentView.BindingContext = BindingContext;
+        StorageContentView.BindingContext = BindingContext;
     }
     
     protected override void OnAppearing()
@@ -40,8 +57,80 @@ public partial class MainPage : ContentPage
 
         // Update UI with current user's information
         UserInfoLabel.Text = $"User: {_authService.CurrentUser?.Username}";
+        
+        // Ensure we show the correct section when returning to this page
+        NavigateTo(_currentSection);
     }
     
+    // Navigation method to switch between content views
+    private void NavigateTo(NavigationSection section)
+    {
+        // Hide all views first
+        FilesContentView.IsVisible = false;
+        AccountContentView.IsVisible = false;
+        StorageContentView.IsVisible = false;
+        
+        // Save the current section
+        _currentSection = section;
+        
+        // Highlight the selected navigation button
+        UpdateNavigationButtons(section);
+        
+        // Show selected view
+        switch (section)
+        {
+            case NavigationSection.Files:
+                FilesContentView.IsVisible = true;
+                break;
+            case NavigationSection.Account:
+                AccountContentView.IsVisible = true;
+                break;
+            case NavigationSection.Storage:
+                StorageContentView.IsVisible = true;
+                break;
+        }
+    }
+    
+    // Update the visual state of navigation buttons
+    private void UpdateNavigationButtons(NavigationSection section)
+    {
+        // Reset all buttons to default state
+        MyCloudButton.BackgroundColor = Colors.Transparent;
+        AccountButton.BackgroundColor = Colors.Transparent;
+        StorageButton.BackgroundColor = Colors.Transparent;
+        
+        // Highlight the selected button
+        switch (section)
+        {
+            case NavigationSection.Files:
+                MyCloudButton.BackgroundColor = Color.FromArgb("#8175B5");
+                break;
+            case NavigationSection.Account:
+                AccountButton.BackgroundColor = Color.FromArgb("#8175B5");
+                break;
+            case NavigationSection.Storage:
+                StorageButton.BackgroundColor = Color.FromArgb("#8175B5");
+                break;
+        }
+    }
+    
+    // Navigation button click handlers
+    private void MyCloudButton_Clicked(object sender, EventArgs e)
+    {
+        NavigateTo(NavigationSection.Files);
+    }
+    
+    private void AccountButton_Clicked(object sender, EventArgs e)
+    {
+        NavigateTo(NavigationSection.Account);
+    }
+    
+    private void StorageButton_Clicked(object sender, EventArgs e)
+    {
+        NavigateTo(NavigationSection.Storage);
+    }
+    
+    // Logout functionality - preserved exactly as before
     private async void LogoutButton_Clicked(object sender, EventArgs e)
     {
         // Show loading indicator
@@ -84,7 +173,8 @@ public partial class MainPage : ContentPage
         }
     }
     
-    private void SearchBar_TextChanged(object sender, TextChangedEventArgs e)
+    // Search bar handler - forwarded from FilesView
+    public void SearchBar_TextChanged(object sender, TextChangedEventArgs e)
     {
         // Get the ViewModel and call the search method
         if (BindingContext is MainViewModel viewModel)
