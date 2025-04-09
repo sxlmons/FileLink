@@ -11,9 +11,11 @@
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
             
-            !-- Value converters -->
+            <!-- Value converters -->
             <converters:ProgressConverter x:Key="ProgressConverter" />
             <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
+            <converters:FolderSizeConverter x:Key="FolderSizeConverter" />
+            <converters:BoolToBackgroundConverter x:Key="BoolToBackgroundConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

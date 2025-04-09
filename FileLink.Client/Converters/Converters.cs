@@ -49,4 +49,38 @@ namespace FileLink.Client.Converters
             return false;
         }
     }
+    
+    // NEW: Convert bool (IsDirectory) to folder size text
+    public class FolderSizeConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool isDirectory && isDirectory)
+                return "Folder";
+            
+            return "File"; // This will be replaced with actual file size when we have that data
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    
+    // NEW: Convert boolean (IsDirectory) to background color
+    public class BoolToBackgroundConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool isDirectory && isDirectory)
+                return Color.FromArgb("#F5F5FF"); // Light blue for directories
+            
+            return Colors.White; // White for files
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

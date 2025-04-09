@@ -13,129 +13,205 @@
         </Grid.ColumnDefinitions>
         
         <!-- Main Content Grid (Left side) -->
-        <Grid Grid.Column="0" RowDefinitions="Auto, *">
-            <VerticalStackLayout Grid.Row="0" Margin="0,20,0,0">
-            <!-- Search Bar  -->
-            <SearchBar Placeholder="Search..."
+        <Grid Grid.Column="0" RowDefinitions="Auto, Auto, *">
+            <!-- Search Bar -->
+            <SearchBar Grid.Row="0" 
+                      Placeholder="Search..."
                       BackgroundColor="White"
                       HeightRequest="40"
+                      Margin="15,20,15,0"
                       TextChanged="SearchBar_TextChanged"/>
                 
-                <!-- Directory Tab, create folder and Back Button -->
-                <Grid Margin="15,10,15,0">
+            <!-- Directory Tab, create folder and Back/Refresh Button -->
+            <Grid Grid.Row="1" Margin="15,10,15,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+            
+                <Button Text="Create Folder" 
+                        BackgroundColor="#4C3B8A" 
+                        TextColor="White"
+                        Command="{Binding DirectoryVM.createDirectory}"
+                        HorizontalOptions="Start"
+                        Grid.Column="0"
+                        WidthRequest="150">
+                    <Button.Shadow>
+                        <Shadow Brush="Black" 
+                                Radius="10" 
+                                Opacity="0.5" 
+                                Offset="2,2"/>
+                    </Button.Shadow>
+                </Button>
+            
+                <Button Text="Refresh" 
+                        BackgroundColor="#4C3B8A" 
+                        TextColor="White"
+                        Command="{Binding DirectoryVM.refreshCommand}"
+                        HorizontalOptions="Start"
+                        Grid.Column="1"
+                        Margin="10,0,0,0"
+                        WidthRequest="120">
+                    <Button.Shadow>
+                        <Shadow Brush="Black" 
+                                Radius="10" 
+                                Opacity="0.5" 
+                                Offset="2,2"/>
+                    </Button.Shadow>
+                </Button>
+                
+                <Button Text="Back" 
+                        BackgroundColor="#4C3B8A" 
+                        TextColor="White"
+                        Command="{Binding DirectoryVM.backButtonCommand}"
+                        IsVisible="{Binding DirectoryVM.IsBackButtonVisible}"
+                        HorizontalOptions="Start"
+                        Grid.Column="2"
+                        Margin="10,0,0,0"
+                        WidthRequest="120">
+                    <Button.Shadow>
+                        <Shadow Brush="Black" 
+                                Radius="10" 
+                                Opacity="0.5" 
+                                Offset="2,2"/>
+                    </Button.Shadow>
+                </Button>
+            </Grid>
+            
+            <!-- Files List Header -->
+            <Grid Grid.Row="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                
+                <!-- Header Row -->
+                <Grid Grid.Row="0" Padding="20,5" BackgroundColor="#F0F0F5">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="40" /> <!-- Icon -->
+                        <ColumnDefinition Width="*" /> <!-- Name -->
+                        <ColumnDefinition Width="100" /> <!-- Owner -->
+                        <ColumnDefinition Width="120" /> <!-- Last Modified -->
+                        <ColumnDefinition Width="80" /> <!-- Size -->
+                        <ColumnDefinition Width="40" /> <!-- Delete Action -->
+                        <ColumnDefinition Width="40" /> <!-- Options Menu -->
                     </Grid.ColumnDefinitions>
-            
-                    <Button Text="Create Folder" 
-                            BackgroundColor="#4C3B8A" 
-                            TextColor="White"
-                            Command="{Binding DirectoryVM.createDirectory}"
-                            HorizontalOptions="Start"
-                            Grid.Column="0"
-                            WidthRequest="150">
-                        <Button.Shadow>
-                            <Shadow Brush="Black" 
-                                    Radius="10" 
-                                    Opacity="0.5" 
-                                    Offset="2,2"/>
-                        </Button.Shadow>
-                    </Button>
-            
-                    <Button Text="Refresh" 
-                            BackgroundColor="#4C3B8A" 
-                            TextColor="White"
-                            Command="{Binding DirectoryVM.refreshCommand}"
-                            HorizontalOptions="Start"
-                            Grid.Column="1"
-                            Margin="10,0,0,0"
-                            WidthRequest="120">
-                        <Button.Shadow>
-                            <Shadow Brush="Black" 
-                                    Radius="10" 
-                                    Opacity="0.5" 
-                                    Offset="2,2"/>
-                        </Button.Shadow>
-                    </Button>
+                    
+                    <Label Grid.Column="0" Text="" FontAttributes="Bold" />
+                    <Label Grid.Column="1" Text="Name" FontAttributes="Bold" />
+                    <Label Grid.Column="2" Text="Owner" FontAttributes="Bold" />
+                    <Label Grid.Column="3" Text="Last Modified" FontAttributes="Bold" />
+                    <Label Grid.Column="4" Text="Size" FontAttributes="Bold" />
+                    <Label Grid.Column="5" Text="" FontAttributes="Bold" />
+                    <Label Grid.Column="6" Text="" FontAttributes="Bold" />
                 </Grid>
-            </VerticalStackLayout>
-
-            <!-- Scrollable Content -->
-            <ScrollView Grid.Row="1">
-                <VerticalStackLayout Spacing="20" Padding="20">
+                
+                <!-- Scrollable Content -->
+                <ScrollView Grid.Row="1">
                     <!-- CollectionView for Files (this part scrolls) -->
                     <CollectionView ItemsSource="{Binding DirectoryVM.Files}" VerticalScrollBarVisibility="Always">
                         <CollectionView.ItemsLayout>
-                            <GridItemsLayout Orientation="Vertical"
-                                             HorizontalItemSpacing="5"
-                                             VerticalItemSpacing="5">
-                                <GridItemsLayout.Span>
-                                    <OnIdiom x:TypeArguments="x:Int32">
-                                        <OnIdiom.Phone>5</OnIdiom.Phone>
-                                        <OnIdiom.Tablet>4</OnIdiom.Tablet>
-                                        <OnIdiom.Desktop>5</OnIdiom.Desktop>
-                                    </OnIdiom>
-                                </GridItemsLayout.Span>
-                            </GridItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="0" />
                         </CollectionView.ItemsLayout>
-                       <CollectionView.ItemTemplate>
+                        
+                        <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="{x:Type directoryNav:ShownFiles}">
-                                <Grid ColumnDefinitions="Auto,Auto" HorizontalOptions="Center" VerticalOptions="Center">
-                                    <!-- Main content (image and name) -->
-                                    <VerticalStackLayout Grid.Column="0" 
-                                                       HorizontalOptions="Center"
-                                                       VerticalOptions="Center">
-                                        <!-- Image (file/folder) -->
-                                        <Image Source="{Binding pngType}"
-                                               WidthRequest="125"
-                                               HeightRequest="125"
-                                               Aspect="AspectFit">
-                                            <Image.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.DirectoryVM.clickDirectoryCommand}"
-                                                                      CommandParameter="{Binding .}"
-                                                                      NumberOfTapsRequired="2">
-                                                </TapGestureRecognizer>
-                                            </Image.GestureRecognizers>
-                                            <Image.Shadow>
-                                                <Shadow Brush="Black"
-                                                        Radius="15"
-                                                        Opacity="0.6"
-                                                        Offset="5,5"/>
-                                            </Image.Shadow>
-                                        </Image>
-                                        <!-- File Name -->
-                                        <Label Text="{Binding fileName}" 
-                                               TextColor="Black"
-                                               FontAttributes="Bold"
-                                               FontSize="16"
-                                               HorizontalTextAlignment="Center"
-                                               LineBreakMode="TailTruncation"/>
-                                    </VerticalStackLayout>
+                                <Grid Padding="20,12" BackgroundColor="{Binding IsDirectory, Converter={StaticResource BoolToBackgroundConverter}}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="40" /> <!-- Icon -->
+                                        <ColumnDefinition Width="*" /> <!-- Name -->
+                                        <ColumnDefinition Width="100" /> <!-- Owner -->
+                                        <ColumnDefinition Width="120" /> <!-- Last Modified -->
+                                        <ColumnDefinition Width="80" /> <!-- Size -->
+                                        <ColumnDefinition Width="40" /> <!-- Delete Action -->
+                                        <ColumnDefinition Width="40" /> <!-- Options Menu -->
+                                    </Grid.ColumnDefinitions>
                                     
-                                    <!-- Delete button (only for files, not directories) -->
-                                    <Button Text="🗑️"
+                                    <!-- File/Folder Icon -->
+                                    <Image Grid.Column="0" 
+                                           Source="{Binding pngType}"
+                                           HeightRequest="24"
+                                           WidthRequest="24"
+                                           VerticalOptions="Center" />
+                                    
+                                    <!-- File/Folder Name -->
+                                    <Label Grid.Column="1" 
+                                           Text="{Binding fileName}"
+                                           VerticalOptions="Center"
+                                           FontSize="14"
+                                           LineBreakMode="TailTruncation" />
+                                           
+                                    <!-- Owner (placeholder for now) -->
+                                    <Label Grid.Column="2" 
+                                           Text="You"
+                                           VerticalOptions="Center"
+                                           FontSize="14" 
+                                           TextColor="#666666" />
+                                           
+                                    <!-- Last Modified (placeholder for now) -->
+                                    <Label Grid.Column="3" 
+                                           Text="Today"
+                                           VerticalOptions="Center"
+                                           FontSize="14" 
+                                           TextColor="#666666" />
+                                    
+                                    <!-- Size (placeholder for now) -->
+                                    <Label Grid.Column="4" 
+                                           Text="{Binding IsDirectory, Converter={StaticResource FolderSizeConverter}}"
+                                           VerticalOptions="Center"
+                                           FontSize="14" 
+                                           TextColor="#666666" />
+                                    
+                                    <!-- Delete Button (only for files, not directories) -->
+                                    <Button Grid.Column="5"
+                                            Text="🚮"
                                             IsVisible="{Binding IsDirectory, Converter={StaticResource InverseBoolConverter}}"
                                             BackgroundColor="Transparent"
                                             TextColor="Red"
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.DirectoryVM.deleteFileCommand}"
                                             CommandParameter="{Binding .}"
-                                            Grid.Column="1"
-                                            VerticalOptions="Start"
-                                            HorizontalOptions="End"
-                                            HeightRequest="30"
                                             WidthRequest="30"
-                                            Margin="0,-10,-10,0"/>
+                                            HeightRequest="30"
+                                            Padding="0"
+                                            HorizontalOptions="End" />
+                                            
+                                    <!-- Options Menu (three dots) -->
+                                    <Button Grid.Column="6"
+                                            Text="⋮"
+                                            BackgroundColor="Transparent"
+                                            TextColor="#666666"
+                                            FontSize="20"
+                                            WidthRequest="30"
+                                            HeightRequest="30"
+                                            Padding="0"
+                                            HorizontalOptions="End" />
+                                    
+                                    <!-- Tap Gesture for row navigation -->
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentView}}, Path=BindingContext.DirectoryVM.clickDirectoryCommand}"
+                                                              CommandParameter="{Binding .}">
+                                        </TapGestureRecognizer>
+                                    </Grid.GestureRecognizers>
                                 </Grid>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
+                        
+                        <!-- Empty View when no files are present -->
+                        <CollectionView.EmptyView>
+                            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Padding="20">
+                                <Image Source="empty_folder.png" HeightRequest="100" WidthRequest="100" Opacity="0.5" />
+                                <Label Text="This folder is empty" FontSize="16" TextColor="#666666" Margin="0,20,0,0" />
+                                <Label Text="Upload files or create a folder to get started" FontSize="14" TextColor="#999999" />
+                            </VerticalStackLayout>
+                        </CollectionView.EmptyView>
                     </CollectionView>
-                </VerticalStackLayout>
-            </ScrollView>
+                </ScrollView>
+            </Grid>
         </Grid>
 
-        <!-- RIGHT SIDEBAR -->
+        <!-- RIGHT SIDEBAR - Keep this part unchanged -->
         <ScrollView Padding="20" Grid.Column="1">
             <Grid RowDefinitions="Auto, *, Auto">
                 <VerticalStackLayout Grid.Row="0" Spacing="20">
