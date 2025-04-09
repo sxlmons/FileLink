@@ -50,15 +50,26 @@ namespace FileLink.Client.Converters
         }
     }
     
-    // NEW: Convert bool (IsDirectory) to folder size text
-    public class FolderSizeConverter : IValueConverter
+    // Display file size or "Folder" for directories
+    public class FileSizeDisplayConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool isDirectory && isDirectory)
-                return "Folder";
+            // ShownFiles object passed directly
+            if (value is DirectoryNavigation.ShownFiles file)
+            {
+                // For directories, show "Folder"
+                if (file.IsDirectory)
+                    return "Folder";
+                
+                // For files, return the formatted size if available
+                if (!string.IsNullOrEmpty(file.FormattedSize))
+                    return file.FormattedSize;
+                
+                return "—"; // Em dash for unknown size
+            }
             
-            return "File"; // This will be replaced with actual file size when we have that data
+            return "—"; // Em dash for unknown
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

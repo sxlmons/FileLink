@@ -240,6 +240,7 @@ public class DirectoryMap : INotifyPropertyChanged
     }
     
     // Load and display contents of current directory
+    // Updated LoadCurrentDirectory method to populate size and date
     public async Task LoadCurrentDirectory()
     {
         if (!_authService.IsLoggedIn)
@@ -272,7 +273,8 @@ public class DirectoryMap : INotifyPropertyChanged
                     fileName = dir.Name,
                     pngType = "folder.png",
                     ItemId = dir.Id,
-                    IsDirectory = true
+                    IsDirectory = true,
+                    LastModified = dir.UpdatedAt // Use the updated date from DirectoryItem
                 };
                 Files.Add(shownDir);
                 _allFiles.Add(shownDir); // Also add to unfiltered collection
@@ -286,7 +288,9 @@ public class DirectoryMap : INotifyPropertyChanged
                     fileName = file.FileName,
                     pngType = "file.png",
                     ItemId = file.Id,
-                    IsDirectory = false
+                    IsDirectory = false,
+                    FormattedSize = file.FormattedSize, // Use the formatted size from FileItem
+                    LastModified = file.UpdatedAt // Use the updated date from FileItem
                 };
                 Files.Add(shownFile);
                 _allFiles.Add(shownFile); // Also add to unfiltered collection
@@ -628,6 +632,7 @@ public class DirectoryMap : INotifyPropertyChanged
 }
 
 // Updated to include ID and type information
+// Updated ShownFiles class with file size and date modified properties
 public class ShownFiles
 {
     private string _fileName;
@@ -644,7 +649,7 @@ public class ShownFiles
         set => _pngType = value;
     }
     
-    // Add ID to track the server-side ID
+    // ID to track the server-side ID
     private string _itemId;
     public string ItemId
     {
@@ -658,5 +663,47 @@ public class ShownFiles
     {
         get => _isDirectory;
         set => _isDirectory = value;
+    }
+    
+    // NEW: File size for display
+    private string _formattedSize = "";
+    public string FormattedSize
+    {
+        get => _formattedSize;
+        set => _formattedSize = value;
+    }
+    
+    // NEW: Last modified date
+    private DateTime _lastModified;
+    public DateTime LastModified
+    {
+        get => _lastModified;
+        set => _lastModified = value;
+    }
+    
+    // NEW: Formatted last modified date for display
+    public string FormattedLastModified
+    {
+        get 
+        {
+            // If date is default/empty, return empty string
+            if (_lastModified == default)
+                return "";
+                
+            // If date is today, show only time
+            if (_lastModified.Date == DateTime.Today)
+                return $"Today {_lastModified.ToString("HH:mm")}";
+                
+            // If date is yesterday, show "Yesterday"
+            if (_lastModified.Date == DateTime.Today.AddDays(-1))
+                return $"Yesterday {_lastModified.ToString("HH:mm")}";
+                
+            // If date is within this year, show month and day
+            if (_lastModified.Year == DateTime.Now.Year)
+                return _lastModified.ToString("MMM dd");
+                
+            // Otherwise show full date without time
+            return _lastModified.ToString("MMM dd, yyyy");
+        }
     }
 }

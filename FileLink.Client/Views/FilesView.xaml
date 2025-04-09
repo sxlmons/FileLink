@@ -67,7 +67,7 @@
                         TextColor="White"
                         Command="{Binding DirectoryVM.backButtonCommand}"
                         IsVisible="{Binding DirectoryVM.IsBackButtonVisible}"
-                        HorizontalOptions="Start"
+                        HorizontalOptions="End"
                         Grid.Column="2"
                         Margin="10,0,0,0"
                         WidthRequest="120">
@@ -92,8 +92,8 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="40" /> <!-- Icon -->
                         <ColumnDefinition Width="*" /> <!-- Name -->
-                        <ColumnDefinition Width="100" /> <!-- Owner -->
-                        <ColumnDefinition Width="120" /> <!-- Last Modified -->
+                        <ColumnDefinition Width="120" /> <!-- Owner -->
+                        <ColumnDefinition Width="145" /> <!-- Last Modified -->
                         <ColumnDefinition Width="80" /> <!-- Size -->
                         <ColumnDefinition Width="40" /> <!-- Delete Action -->
                         <ColumnDefinition Width="40" /> <!-- Options Menu -->
@@ -122,8 +122,8 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="40" /> <!-- Icon -->
                                         <ColumnDefinition Width="*" /> <!-- Name -->
-                                        <ColumnDefinition Width="100" /> <!-- Owner -->
-                                        <ColumnDefinition Width="120" /> <!-- Last Modified -->
+                                        <ColumnDefinition Width="120" /> <!-- Owner -->
+                                        <ColumnDefinition Width="145" /> <!-- Last Modified -->
                                         <ColumnDefinition Width="80" /> <!-- Size -->
                                         <ColumnDefinition Width="40" /> <!-- Delete Action -->
                                         <ColumnDefinition Width="40" /> <!-- Options Menu -->
@@ -150,23 +150,23 @@
                                            FontSize="14" 
                                            TextColor="#666666" />
                                            
-                                    <!-- Last Modified (placeholder for now) -->
+                                    <!-- Last Modified (real data) -->
                                     <Label Grid.Column="3" 
-                                           Text="Today"
+                                           Text="{Binding FormattedLastModified}"
                                            VerticalOptions="Center"
                                            FontSize="14" 
                                            TextColor="#666666" />
                                     
-                                    <!-- Size (placeholder for now) -->
+                                    <!-- Size (real data for files, "Folder" for directories) -->
                                     <Label Grid.Column="4" 
-                                           Text="{Binding IsDirectory, Converter={StaticResource FolderSizeConverter}}"
+                                           Text="{Binding Converter={StaticResource FileSizeDisplayConverter}}"
                                            VerticalOptions="Center"
                                            FontSize="14" 
                                            TextColor="#666666" />
                                     
                                     <!-- Delete Button (only for files, not directories) -->
                                     <Button Grid.Column="5"
-                                            Text="🚮"
+                                            Text="🗑️"
                                             IsVisible="{Binding IsDirectory, Converter={StaticResource InverseBoolConverter}}"
                                             BackgroundColor="Transparent"
                                             TextColor="Red"

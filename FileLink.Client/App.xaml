@@ -14,7 +14,7 @@
             <!-- Value converters -->
             <converters:ProgressConverter x:Key="ProgressConverter" />
             <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
-            <converters:FolderSizeConverter x:Key="FolderSizeConverter" />
+            <converters:FileSizeDisplayConverter x:Key="FileSizeDisplayConverter" />
             <converters:BoolToBackgroundConverter x:Key="BoolToBackgroundConverter" />
         </ResourceDictionary>
     </Application.Resources>
