@@ -129,7 +129,7 @@ public class PacketTestsNUnit
     public void EncryptedPayload_AllowsGetAndSet()
     {
         var packet = new Packet();
-        var encryptedData = Encoding.UTF8.GetBytes("testEncryptedPayload");
+        var encryptedData = "testEncryptedPayload"u8.ToArray();
         
         packet.EncryptedPayload = encryptedData;
         
