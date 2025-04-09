@@ -213,10 +213,7 @@ public class PacketSerializerTestsNUnit
         var deserializePacket = _serializer.Deserialize(serialized);
         
         NUnit.Framework.Assert.That(deserializePacket.EncryptedPayload, Is.Not.Null);
-        if (deserializePacket.Payload != null)
-        {
-            NUnit.Framework.Legacy.CollectionAssert.AreEqual(packet.Payload, deserializePacket.Payload);
-        }
+        NUnit.Framework.Legacy.CollectionAssert.AreEqual(packet.Payload, deserializePacket.Payload);
         
     }
 
