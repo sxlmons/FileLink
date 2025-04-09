@@ -71,7 +71,7 @@ namespace FileLink.Client.Protocol
                 {
                     // Add packet type differentiator 
 
-                    if (packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_CHUNK_REQUEST) 
+                    if (packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_CHUNK_REQUEST) 
                     {
                         
                         packet.EncryptedPayload = EncryptPayload(packet.Payload); // Encrypting packet payload yo
@@ -178,7 +178,7 @@ namespace FileLink.Client.Protocol
                 int payloadLength = reader.ReadInt32();
                 if (payloadLength > 0)
                 {
-                    bool encryptedCommands = packet.CommandCode == Commands.CommandCode.FILE_DOWNLOAD_CHUNK_RESPONSE;
+                    bool encryptedCommands = packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_CHUNK_REQUEST;
                     
                     byte[] tempData = reader.ReadBytes(payloadLength);
                     
