@@ -1,5 +1,6 @@
 ﻿using FileLink.Client.Services;
 using FileLink.Client.Views;
+using Microsoft.Maui.Graphics;
 
 namespace FileLink.Client.Pages;
 
@@ -13,6 +14,7 @@ public partial class MainPage : ContentPage
     // Enum to track the current navigation section
     public enum NavigationSection
     {
+        Home,
         Files,
         Account,
         Storage
@@ -20,6 +22,11 @@ public partial class MainPage : ContentPage
     
     // Keep track of the current section
     private NavigationSection _currentSection = NavigationSection.Files;
+    
+    // Colors for selected and unselected states
+    private readonly Color _selectedBackgroundColor = Color.FromArgb("#8175B5");
+    private readonly Color _unselectedBackgroundColor = Colors.Transparent;
+    private readonly Color _textColor = Colors.White;
     
     public MainPage(
         AuthenticationService authService, 
@@ -56,7 +63,7 @@ public partial class MainPage : ContentPage
         }
 
         // Update UI with current user's information
-        UserInfoLabel.Text = $"User: {_authService.CurrentUser?.Username}";
+        UserInfoLabel.Text = _authService.CurrentUser?.Username ?? "User";
         
         // Ensure we show the correct section when returning to this page
         NavigateTo(_currentSection);
@@ -79,6 +86,7 @@ public partial class MainPage : ContentPage
         // Show selected view
         switch (section)
         {
+            case NavigationSection.Home:
             case NavigationSection.Files:
                 FilesContentView.IsVisible = true;
                 break;
@@ -95,21 +103,25 @@ public partial class MainPage : ContentPage
     private void UpdateNavigationButtons(NavigationSection section)
     {
         // Reset all buttons to default state
-        MyCloudButton.BackgroundColor = Colors.Transparent;
-        AccountButton.BackgroundColor = Colors.Transparent;
-        StorageButton.BackgroundColor = Colors.Transparent;
+        HomeButton.BackgroundColor = _unselectedBackgroundColor;
+        MyCloudButton.BackgroundColor = _unselectedBackgroundColor;
+        StorageButton.BackgroundColor = _unselectedBackgroundColor;
+        AccountButton.BackgroundColor = _unselectedBackgroundColor;
         
         // Highlight the selected button
         switch (section)
         {
+            case NavigationSection.Home:
+                HomeButton.BackgroundColor = _selectedBackgroundColor;
+                break;
             case NavigationSection.Files:
-                MyCloudButton.BackgroundColor = Color.FromArgb("#8175B5");
+                MyCloudButton.BackgroundColor = _selectedBackgroundColor;
                 break;
             case NavigationSection.Account:
-                AccountButton.BackgroundColor = Color.FromArgb("#8175B5");
+                AccountButton.BackgroundColor = _selectedBackgroundColor;
                 break;
             case NavigationSection.Storage:
-                StorageButton.BackgroundColor = Color.FromArgb("#8175B5");
+                StorageButton.BackgroundColor = _selectedBackgroundColor;
                 break;
         }
     }
@@ -130,7 +142,7 @@ public partial class MainPage : ContentPage
         NavigateTo(NavigationSection.Storage);
     }
     
-    // Logout functionality - preserved exactly as before
+    // Logout functionality
     private async void LogoutButton_Clicked(object sender, EventArgs e)
     {
         // Show loading indicator

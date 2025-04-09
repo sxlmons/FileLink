@@ -23,6 +23,9 @@ namespace FileLink.Client
                     fonts.AddFont("Inter_18-Medium.ttf", "InterMedium");
                     fonts.AddFont("Inter_18-SemiBold.ttf", "InterSemiBold");
                     fonts.AddFont("Inter_18-Bold.ttf", "InterBold");
+                    
+                    // SymbolsOk
+                    fonts.AddFont("MaterialSymbolsOutlined-Regular.ttf", "MaterialSymbols");
                 })
                 .UseSkiaSharp();
             

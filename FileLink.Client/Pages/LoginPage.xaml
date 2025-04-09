@@ -27,7 +27,7 @@
                 <Grid RowDefinitions="Auto,*,Auto" Padding="40">
                     <!-- Top logo area -->
                     <Image Grid.Row="0"
-                           Source="cloudfile_logo.png"
+                           Source="cloud_logo.png"
                            HeightRequest="36"
                            HorizontalOptions="Start"
                            VerticalOptions="Start" />
@@ -260,7 +260,7 @@
                                             <HorizontalStackLayout HorizontalOptions="Center"
                                                                VerticalOptions="Center"
                                                                Spacing="8">
-                                                <Image Source="google_icon.png"
+                                                <Image Source="google_symbol.png"
                                                        WidthRequest="20"
                                                        HeightRequest="20"
                                                        VerticalOptions="Center" />
@@ -469,7 +469,7 @@
                                             <HorizontalStackLayout HorizontalOptions="Center"
                                                                VerticalOptions="Center"
                                                                Spacing="8">
-                                                <Image Source="apple_icon.png"
+                                                <Image Source="apple_logo_grey.png"
                                                        WidthRequest="20"
                                                        HeightRequest="20"
                                                        VerticalOptions="Center" />

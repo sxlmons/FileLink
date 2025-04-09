@@ -7,145 +7,377 @@
              xmlns:directoryNav="clr-namespace:FileLink.Client.DirectoryNavigation"
              xmlns:views="clr-namespace:FileLink.Client.Views"
              Shell.NavBarIsVisible="False"
+             BackgroundColor="#F5F5F8"
              x:Class="FileLink.Client.Pages.MainPage">
    
-    <!-- We're using a 3-column layout:
-       - Column 0: Left navigation menu
-       - Column 1: Main content (Search, Categories, Recent Files)
-       - Column 2: Right-hand panel (Add New Files, Storage, Favourites)-->
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="280" />  <!-- Side Nav -->
+            <ColumnDefinition Width="270" />  <!-- Side Nav -->
             <ColumnDefinition Width="*" />    <!-- Main Content -->
         </Grid.ColumnDefinitions>
 
-        <!-- ========== LEFT NAVIGATION ========== -->
-        
-        <Grid Grid.Column="0" 
-            BackgroundColor="#3B2D79"
-              RowDefinitions="Auto, *, Auto">
-            
-            <VerticalStackLayout Spacing="15" Grid.Row="0" Padding="20,0">
-                <!-- App Title / Logo -->
-                <Label 
-                    Text="FileLink"
-                    FontFamily="InterBold"
-                    FontSize="56"
-                    TextColor="White"
-                    HorizontalOptions="Center"
-                    Margin="0,30,0,0"/>
-                
-                <!-- User Profile Section -->
-                <Frame BackgroundColor="#4C3B8A"
-                       CornerRadius="10"
-                       HasShadow="False"
-                       Padding="10"
-                       HeightRequest="125"
-                       WidthRequest="150">
-                    <VerticalStackLayout>
-                        <!-- Avatar placeholder -->
-                        <Image Source="user_icon2.png" 
-                               HeightRequest="75" 
-                               WidthRequest="75"
-                               HorizontalOptions="Center"
-                               Aspect="AspectFit"/>
-                        <!-- Display logged-in username -->
-                        <Label 
-                            x:Name="UserInfoLabel"
-                            Text="Welcome Back!" 
-                            TextColor="White"
-                            HorizontalOptions="Center"
-                            FontSize="14"/>
-                    </VerticalStackLayout>
-                </Frame>
-
-                <!-- Navigation Buttons -->
-                <VerticalStackLayout Spacing="5">
-                    <Button x:Name="Home"
-                            Text="Home" 
-                            TextColor="White"
-                            FontFamily="InterMedium"
-                            FontSize="16"
-                            BackgroundColor="#3B2D79"
-                            HorizontalOptions="Fill"/>
+        <!-- ========== MODERNIZED LEFT NAVIGATION with PURPLE THEME ========== -->
+        <Border Grid.Column="0"
+                BackgroundColor="#3B2D79"
+                StrokeThickness="0"
+                Shadow="{Shadow Brush=#20000000, Radius=8, Offset='4,0'}">
+            <Grid RowDefinitions="Auto, *, Auto">
+                <!-- Top Section with Logo and Profile -->
+                <VerticalStackLayout Grid.Row="0" Spacing="32" Padding="20,32,20,20">
+                    <!-- App Logo and Title -->
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <Image Grid.Column="0"
+                               Source="cloud_logo.png"
+                               HeightRequest="32"
+                               VerticalOptions="Center" />
+                        <Label Grid.Column="1"
+                               Text="FileLink"
+                               FontFamily="InterBold"
+                               FontSize="48"
+                               TextColor="White"
+                               VerticalOptions="Center" />
+                    </Grid>
                     
-                    <Button x:Name="MyCloudButton"
-                            Text="My Cloud" 
-                            TextColor="White"
-                            FontFamily="InterMedium"
-                            FontSize="16"
-                            HorizontalOptions="Fill" 
-                            Clicked="MyCloudButton_Clicked"/>
-                    
-                    <Button x:Name="StorageButton"
-                            Text="Storage" 
-                            TextColor="White"
-                            FontFamily="InterMedium"
-                            FontSize="16"
-                            HorizontalOptions="Fill"
-                            Clicked="StorageButton_Clicked"/>
+                    <!-- User Profile Section -->
+                    <Border BackgroundColor="#4C3B8A"
+                            Padding="16"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 12">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <!-- Profile Avatar -->
+                            <Border Grid.Column="0"
+                                    StrokeThickness="0"
+                                    HeightRequest="52"
+                                    WidthRequest="52"
+                                    StrokeShape="RoundRectangle 21"
+                                    Stroke="#8175B5">
+                                <Image Source="user_icon4.png"
+                                       Aspect="AspectFill"
+                                       Margin="2" />
+                            </Border>
+                            
+                            <!-- User Info -->
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label x:Name="UserInfoLabel"
+                                       Text="Welcome Back!"
+                                       TextColor="White"
+                                       FontSize="16"
+                                       FontFamily="InterSemiBold" />
+                                <Label Text="Free Account"
+                                       TextColor="#B6B7CD"
+                                       FontSize="13"
+                                       FontFamily="InterRegular" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
                 </VerticalStackLayout>
-            </VerticalStackLayout>
-            
-            <BoxView BackgroundColor="Transparent"
-                     Grid.Row="1"/>
-            
-            <VerticalStackLayout Grid.Row="2" Padding="20,20">
-                <!-- Bottom Navigation -->
-                <Button x:Name="AccountButton"
-                        Text="Account" 
-                        BackgroundColor="Transparent"
-                        TextColor="White"
-                        FontFamily="InterMedium"
-                        FontSize="16"
-                        HorizontalOptions="Fill"
-                        Clicked="AccountButton_Clicked"/>
                 
-                <Button x:Name="SettingsButton"
-                        Text="Account" 
-                        BackgroundColor="Transparent"
-                        TextColor="White"
-                        FontFamily="InterMedium"
-                        FontSize="16"
-                        HorizontalOptions="Fill"/>
+                <!-- Main Navigation Menu -->
+                <ScrollView Grid.Row="1" Padding="12,0,12,0">
+                    <VerticalStackLayout Spacing="4">
+                        <!-- Label for Section -->
+                        <Label Text="MAIN MENU"
+                               Margin="12,0,0,8"
+                               TextColor="#A8A5BD"
+                               FontSize="11"
+                               FontFamily="InterSemiBold" />
+                               
+                        <!-- Home Button with Icon -->
+                        <Border x:Name="HomeButton"
+                                BackgroundColor="Transparent"
+                                HeightRequest="48" 
+                                Padding="12,0"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 8">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                  ColumnSpacing="12"
+                                  HorizontalOptions="Fill"
+                                  VerticalOptions="Center">
+                                <Image Grid.Column="0"
+                                       Source="home_icon.png"
+                                       HeightRequest="20"
+                                       WidthRequest="20"
+                                       VerticalOptions="Center" />
+                                <Label Grid.Column="1"
+                                       Text="Home"
+                                       TextColor="White"
+                                       FontFamily="InterMedium"
+                                       FontSize="14"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+                        
+                        <!-- My Cloud Button with Icon -->
+                        <Border x:Name="MyCloudButton"
+                                BackgroundColor="Transparent"
+                                HeightRequest="48" 
+                                Padding="12,0"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 8">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="MyCloudButton_Clicked" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                  ColumnSpacing="12"
+                                  HorizontalOptions="Fill"
+                                  VerticalOptions="Center">
+                                <Image Grid.Column="0"
+                                       Source="cloud_icon.png"
+                                       HeightRequest="20"
+                                       WidthRequest="20"
+                                       VerticalOptions="Center" />
+                                <Label Grid.Column="1"
+                                       Text="My Cloud"
+                                       TextColor="White"
+                                       FontFamily="InterMedium"
+                                       FontSize="14"
+                                       VerticalOptions="Center" />
+                                <Border Grid.Column="2"
+                                        BackgroundColor="#8175B5"
+                                        WidthRequest="24"
+                                        HeightRequest="24"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 12"
+                                        HorizontalOptions="End"
+                                        VerticalOptions="Center">
+                                    <Label Text="4"
+                                           TextColor="White"
+                                           FontSize="12"
+                                           FontFamily="InterMedium"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Storage Button with Icon -->
+                        <Border x:Name="StorageButton"
+                                BackgroundColor="Transparent"
+                                HeightRequest="48" 
+                                Padding="12,0"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 8">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="StorageButton_Clicked" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                  ColumnSpacing="12"
+                                  HorizontalOptions="Fill"
+                                  VerticalOptions="Center">
+                                <Image Grid.Column="0"
+                                       Source="storage_icon.png"
+                                       HeightRequest="20"
+                                       WidthRequest="20"
+                                       VerticalOptions="Center" />
+                                <Label Grid.Column="1"
+                                       Text="Storage"
+                                       TextColor="White"
+                                       FontFamily="InterMedium"
+                                       FontSize="14"
+                                       VerticalOptions="Center" />
+                                <Border Grid.Column="2"
+                                        BackgroundColor="#D9574C"
+                                        WidthRequest="24"
+                                        HeightRequest="24"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 12"
+                                        HorizontalOptions="End"
+                                        VerticalOptions="Center"
+                                        IsVisible="False">
+                                    <Label Text="!"
+                                           TextColor="White"
+                                           FontSize="12"
+                                           FontFamily="InterBold"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Shared Files Button -->
+                        <Border BackgroundColor="Transparent"
+                                HeightRequest="48" 
+                                Padding="12,0"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 8">
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="12"
+                                  HorizontalOptions="Fill"
+                                  VerticalOptions="Center">
+                                <Image Grid.Column="0"
+                                       Source="shared_icon.png"
+                                       HeightRequest="20"
+                                       WidthRequest="20"
+                                       VerticalOptions="Center" />
+                                <Label Grid.Column="1"
+                                       Text="Shared Files"
+                                       TextColor="White"
+                                       FontFamily="InterMedium"
+                                       FontSize="14"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Divider -->
+                        <BoxView HeightRequest="1"
+                                 BackgroundColor="#5C4DA1"
+                                 Margin="0,16" />
+                        
+                        <!-- Label for Settings Section -->
+                        <Label Text="SETTINGS"
+                               Margin="12,0,0,8"
+                               TextColor="#A8A5BD"
+                               FontSize="11"
+                               FontFamily="InterSemiBold" />
+                        
+                        <!-- Account Settings Button -->
+                        <Border x:Name="AccountButton"
+                                BackgroundColor="Transparent"
+                                HeightRequest="48" 
+                                Padding="12,0"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 8">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="AccountButton_Clicked" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="12"
+                                  HorizontalOptions="Fill"
+                                  VerticalOptions="Center">
+                                <Image Grid.Column="0"
+                                       Source="account_icon.png"
+                                       HeightRequest="20"
+                                       WidthRequest="20"
+                                       VerticalOptions="Center" />
+                                <Label Grid.Column="1"
+                                       Text="Account"
+                                       TextColor="White"
+                                       FontFamily="InterMedium"
+                                       FontSize="14"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Settings Button -->
+                        <Border x:Name="SettingsButton"
+                                BackgroundColor="Transparent"
+                                HeightRequest="48" 
+                                Padding="12,0"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 8">
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="12"
+                                  HorizontalOptions="Fill"
+                                  VerticalOptions="Center">
+                                <Image Grid.Column="0"
+                                       Source="settings_icon.png"
+                                       HeightRequest="20"
+                                       WidthRequest="20"
+                                       VerticalOptions="Center" />
+                                <Label Grid.Column="1"
+                                       Text="Settings"
+                                       TextColor="White"
+                                       FontFamily="InterMedium"
+                                       FontSize="14"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+                </ScrollView>
                 
-                <!-- Logout Button -->
-                <Button 
-                    x:Name="LogoutButton"
-                    Text="Logout"
-                    FontFamily="InterMedium"
-                    FontSize="16"
-                    BackgroundColor="#8175B5"
-                    TextColor="White"
-                    Clicked="LogoutButton_Clicked"
-                    HorizontalOptions="Fill"
-                    Margin="0,20,0,0" />
-                
-                <!-- Status indicators for logout -->
-                <ActivityIndicator 
-                    x:Name="ActivitySpinner"
-                    IsRunning="false"
-                    IsVisible="false"
-                    HorizontalOptions="Center" 
-                    Color="White"/>
-                
-                <Label 
-                    x:Name="StatusLabel"
-                    Text=""
-                    TextColor="White"
-                    HorizontalOptions="Fill"
-                    IsVisible="False" />
-            </VerticalStackLayout>
-        </Grid>
+                <!-- Bottom Section with Storage and Logout -->
+                <VerticalStackLayout Grid.Row="2" Padding="24" Spacing="16">
+                    <!-- Storage Usage Indicator -->
+                    <VerticalStackLayout Spacing="4">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0"
+                                   Text="Storage"
+                                   TextColor="White"
+                                   FontSize="12"
+                                   FontFamily="InterMedium" />
+                            <Label Grid.Column="1"
+                                   Text="8.2 GB of 15 GB used"
+                                   TextColor="#B6B7CD"
+                                   FontSize="12"
+                                   FontFamily="InterRegular" />
+                        </Grid>
+                        
+                        <!-- Storage Progress Bar -->
+                        <Frame HeightRequest="6"
+                               CornerRadius="3"
+                               Padding="0"
+                               HasShadow="False"
+                               BackgroundColor="#4C3B8A"
+                               BorderColor="Transparent"
+                               >
+                            <Frame HorizontalOptions="Start"
+                                   WidthRequest="165"
+                                   HeightRequest="6"
+                                   CornerRadius="3"
+                                   Padding="0"
+                                   HasShadow="False"
+                                   BorderColor="Transparent"
+                                   BackgroundColor="#8175B5" />
+                        </Frame>
+                    </VerticalStackLayout>
+                    
+                    <!-- Logout Button -->
+                    <Border x:Name="LogoutButton"
+                            BackgroundColor="#8175B5"
+                            HeightRequest="42" 
+                            Padding="12,0"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 21"
+                            HorizontalOptions="Fill">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="LogoutButton_Clicked" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="Auto,*"
+                              ColumnSpacing="10"
+                              HorizontalOptions="Center"
+                              VerticalOptions="Center">
+                            <Image Grid.Column="0"
+                                   Source="logout_icon.png"
+                                   HeightRequest="18"
+                                   WidthRequest="18"
+                                   VerticalOptions="Center" />
+                            <Label Grid.Column="1"
+                                   Text="Logout"
+                                   TextColor="White"
+                                   FontFamily="InterMedium"
+                                   FontSize="14"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                    
+                    <!-- Status indicators for logout -->
+                    <ActivityIndicator 
+                        x:Name="ActivitySpinner"
+                        IsRunning="false"
+                        IsVisible="false"
+                        HorizontalOptions="Center" 
+                        Color="White" />
+                    
+                    <Label 
+                        x:Name="StatusLabel"
+                        Text=""
+                        TextColor="#B6B7CD"
+                        FontSize="12"
+                        HorizontalOptions="Center"
+                        IsVisible="False" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
         
         <!-- ========== MAIN CONTENT AREA ========== -->
-        <Grid Grid.Column="1" Padding="20">
+        <Grid Grid.Column="1" Padding="24">
             <!-- Content Views for different sections -->
             <views:FilesView x:Name="FilesContentView" IsVisible="True" />
             <views:AccountView x:Name="AccountContentView" IsVisible="False" />
             <views:StorageView x:Name="StorageContentView" IsVisible="False" />
         </Grid>
-
-        <!-- The right sidebar has been moved to FilesView.xaml -->
     </Grid>
 </ContentPage>
