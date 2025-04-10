@@ -1,6 +1,5 @@
 using FileLink.Server.Core.Exceptions;
 using FileLink.Server.Disk.FileManagement;
-using FileLink.Server.FileManagement;
 using FileLink.Server.Services.Logging;
 
 namespace FileLink.Server.Disk.DirectoryManagement

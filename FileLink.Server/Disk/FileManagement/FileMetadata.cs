@@ -1,4 +1,4 @@
-namespace FileLink.Server.FileManagement;
+namespace FileLink.Server.Disk.FileManagement;
 
     // Represents metadata for a file stored in our server
     public class FileMetadata
