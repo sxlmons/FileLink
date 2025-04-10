@@ -27,7 +27,7 @@ public class ServerEngine
     private bool _initialized = false;
 
     // Gets the server configuration
-    public static ServerConfiguration Configuration { get; private set; }
+    public static ServerConfiguration Configuration { get; set; }
     
     // Initializes an instances oof the ServerEngine class
     public ServerEngine(ServerConfiguration config)
