@@ -110,7 +110,7 @@ public class DirectoryServiceTestsNUnit
         Assert.That(result, Is.Null);
     }
     
-    [Test] // Failing 
+    [Test] 
     public async Task DeleteDirectory_Async_ReturnsFalse_WhenDirectoryExists()
     {
         var setUp = new
@@ -155,7 +155,7 @@ public class DirectoryServiceTestsNUnit
         Assert.That(result, Is.False);
     }
     
-    [Test] // Failing
+    [Test] 
     public async Task GetDirectoryByIdAsync_ShouldReturnDirectory_WhenFound()
     {
         var response = new
