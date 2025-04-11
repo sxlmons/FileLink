@@ -67,25 +67,10 @@ namespace FileLink.Client.Protocol
                 }
 
                 // Write payload
-                if (packet.Payload != null &&  packet.Payload.Length > 0)
+                if (packet.Payload != null)
                 {
-                    // Add packet type differentiator 
-
-                    if (packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_CHUNK_REQUEST) 
-                    {
-                        
-                        packet.EncryptedPayload = EncryptPayload(packet.Payload); // Encrypting packet payload yo
-                        writer.Write(packet.EncryptedPayload.Length);
-                        writer.Write(packet.EncryptedPayload); // Writing the encrypted payload 
-                        
-                    }
-                    else
-                    {
-                        writer.Write(packet.Payload.Length);
-                        writer.Write(packet.Payload);
-                        
-                    }
-
+                    writer.Write(packet.Payload.Length);
+                    writer.Write(packet.Payload);
                 }
                 else
                 {
@@ -178,20 +163,7 @@ namespace FileLink.Client.Protocol
                 int payloadLength = reader.ReadInt32();
                 if (payloadLength > 0)
                 {
-                    bool encryptedCommands = packet.CommandCode == Commands.CommandCode.FILE_UPLOAD_CHUNK_REQUEST;
-                    
-                    byte[] tempData = reader.ReadBytes(payloadLength);
-                    
-                    if (encryptedCommands) // Decrypting packet payload 
-                    { 
-                        packet.EncryptedPayload = tempData;
-                        packet.Payload = DecryptPayload(tempData);
-                        
-                    } else
-                    {
-                        packet.Payload = tempData; // if the packet is never encrypted to begin with, it will be stored in packet.Payload
-                    }
-                    
+                    packet.Payload = reader.ReadBytes(payloadLength);
                 }
 
                 return packet;
