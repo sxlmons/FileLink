@@ -410,20 +410,6 @@
                 
                 <BoxView BackgroundColor="Transparent"
                          Grid.Row="1"/>
-
-                <!-- Storage Info -->
-                <Frame Padding="20" CornerRadius="10" BackgroundColor="White" Grid.Row="2">
-                    <VerticalStackLayout Spacing="10">
-                        <Label Text="Your Storage"
-                               FontAttributes="Bold" 
-                               FontSize="16"/>
-                        <Label Text="-- GB used of -- GB" FontSize="12"/>
-                        <ProgressBar Progress="0" />
-                        <Label Text="Storage information not available"
-                               FontSize="12"
-                               HorizontalOptions="End"/>
-                    </VerticalStackLayout>
-                </Frame>
             </Grid>
         </ScrollView>
     </Grid>

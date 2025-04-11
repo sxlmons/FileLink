@@ -135,21 +135,6 @@
                                        FontFamily="InterMedium"
                                        FontSize="14"
                                        VerticalOptions="Center" />
-                                <Border Grid.Column="2"
-                                        BackgroundColor="#8175B5"
-                                        WidthRequest="24"
-                                        HeightRequest="24"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 12"
-                                        HorizontalOptions="End"
-                                        VerticalOptions="Center">
-                                    <Label Text="4"
-                                           TextColor="White"
-                                           FontSize="12"
-                                           FontFamily="InterMedium"
-                                           HorizontalOptions="Center"
-                                           VerticalOptions="Center" />
-                                </Border>
                             </Grid>
                         </Border>
                         
