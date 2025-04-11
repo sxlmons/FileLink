@@ -5,7 +5,8 @@ using FileLink.Server.Services.Logging;
 namespace FileLink.Server.Authentication
 {
     // Service that provides authentication and user management functionality
-    public class AuthenticationService
+    // Now implements IAuthenticationService interface
+    public class AuthenticationService : IAuthenticationService
     {
         private readonly IUserRepository _userRepository;
         private readonly LogService _logService;
@@ -153,19 +154,3 @@ namespace FileLink.Server.Authentication
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
