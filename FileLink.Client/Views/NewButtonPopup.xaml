@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="FileLink.Client.Views.NewButtonPopup"
+             Size="180, 100"
+             Color="Transparent"
+             CanBeDismissedByTappingOutsideOfPopup="True">
+    
+    <Border BackgroundColor="White"
+            StrokeThickness="1"
+            Stroke="#E0E0E5"
+            StrokeShape="RoundRectangle 8"
+            Padding="0">
+        <Border.Shadow>
+            <Shadow Brush="Black"
+                    Offset="0,2"
+                    Radius="4"
+                    Opacity="0.2"/>
+        </Border.Shadow>
+        <VerticalStackLayout Spacing="0">
+            <!-- Upload File Option -->
+            <Grid Padding="16,12" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="UploadFile_Tapped"/>
+                </Grid.GestureRecognizers>
+                <Image Grid.Column="0"
+                       Source="upload_icon.png"
+                       HeightRequest="20"
+                       WidthRequest="20"
+                       VerticalOptions="Center"/>
+                <Label Grid.Column="1"
+                       Text="Upload file"
+                       TextColor="#333333"
+                       FontSize="14"
+                       VerticalOptions="Center"/>
+            </Grid>
+            
+            <!-- Divider -->
+            <BoxView HeightRequest="1" BackgroundColor="#F0F0F5"/>
+            
+            <!-- Create Folder Option -->
+            <Grid Padding="16,12" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="CreateFolder_Tapped"/>
+                </Grid.GestureRecognizers>
+                <Image Grid.Column="0"
+                       Source="folder_add.png"
+                       HeightRequest="20"
+                       WidthRequest="20"
+                       VerticalOptions="Center"/>
+                <Label Grid.Column="1"
+                       Text="New folder"
+                       TextColor="#333333"
+                       FontSize="14"
+                       VerticalOptions="Center"/>
+            </Grid>
+        </VerticalStackLayout>
+    </Border>
+</toolkit:Popup>

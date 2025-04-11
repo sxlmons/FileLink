@@ -381,8 +381,8 @@
             <views:FilesView x:Name="FilesContentView" IsVisible="True" />
             <views:AccountView x:Name="AccountContentView" IsVisible="False" />
             <views:StorageView x:Name="StorageContentView" IsVisible="False" />
-            <views:StorageView x:Name="HomeContentView" IsVisible="False" />
-            <views:StorageView x:Name="SettingsContentView" IsVisible="False" />
+            <views:HomeView x:Name="HomeContentView" IsVisible="False" />
+            <views:SettingsView x:Name="SettingsContentView" IsVisible="False" />
         </Grid>
     </Grid>
 </ContentPage>

@@ -3,6 +3,7 @@ using FileLink.Client.Services;
 using FileLink.Client.Views;
 using Microsoft.Extensions.Logging;
 using SkiaSharp.Views.Maui.Controls.Hosting;
+using CommunityToolkit.Maui;
 
 namespace FileLink.Client
 {
@@ -11,8 +12,10 @@ namespace FileLink.Client
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();
+            
             builder
                 .UseMauiApp<App>()
+                .UseMauiCommunityToolkit()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

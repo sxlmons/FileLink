@@ -13,72 +13,140 @@
         </Grid.ColumnDefinitions>
         
         <!-- Main Content Grid (Left side) -->
-        <Grid Grid.Column="0" RowDefinitions="Auto, Auto, *">
-            <!-- Search Bar -->
-            <SearchBar Grid.Row="0" 
-                      Placeholder="Search..."
-                      BackgroundColor="White"
-                      HeightRequest="40"
-                      Margin="15,20,15,0"
-                      TextChanged="SearchBar_TextChanged"/>
-                
-            <!-- Directory Tab, create folder and Back/Refresh Button -->
-            <Grid Grid.Row="1" Margin="15,10,15,10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0" RowDefinitions="Auto, Auto, *">
+                    <!-- Top Bar with Search and New Button -->
+        <Grid Grid.Row="0" Padding="15,20,15,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>    <!-- Search -->
+                <ColumnDefinition Width="Auto"/> <!-- Action Buttons -->
+            </Grid.ColumnDefinitions>
             
-                <Button Text="Create Folder" 
-                        BackgroundColor="#4C3B8A" 
-                        TextColor="White"
-                        Command="{Binding DirectoryVM.createDirectory}"
-                        HorizontalOptions="Start"
-                        Grid.Column="0"
-                        WidthRequest="150">
-                    <Button.Shadow>
-                        <Shadow Brush="Black" 
-                                Radius="10" 
-                                Opacity="0.5" 
-                                Offset="2,2"/>
-                    </Button.Shadow>
-                </Button>
-            
-                <Button Text="Refresh" 
-                        BackgroundColor="#4C3B8A" 
-                        TextColor="White"
-                        Command="{Binding DirectoryVM.refreshCommand}"
-                        HorizontalOptions="Start"
-                        Grid.Column="1"
-                        Margin="10,0,0,0"
-                        WidthRequest="120">
-                    <Button.Shadow>
-                        <Shadow Brush="Black" 
-                                Radius="10" 
-                                Opacity="0.5" 
-                                Offset="2,2"/>
-                    </Button.Shadow>
-                </Button>
+            <!-- Search Bar (Modernized) -->
+            <Border Grid.Column="0"
+                    Stroke="#E0E0E5"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 8"
+                    BackgroundColor="White"
+                    Margin="0,0,10,0">
+                <Grid ColumnDefinitions="Auto,*">
+                    <Image Source="search_icon.png" 
+                           HeightRequest="18" 
+                           WidthRequest="18"
+                           Margin="12,0,0,0"
+                           VerticalOptions="Center"
+                           Opacity="0.6"/>
+                    <Entry Placeholder="Search files and folders..."
+                           PlaceholderColor="#9A9AB0"
+                           BackgroundColor="Transparent"
+                           FontSize="14"
+                           Grid.Column="1"
+                           Margin="6,0,0,0"
+                           TextChanged="SearchBar_TextChanged"/>
+                </Grid>
+            </Border>
+
+            <!-- Action Buttons Bar -->
+            <HorizontalStackLayout Grid.Column="1" Spacing="8">
+                <!-- New Button -->
+                <Border x:Name="NewButton"
+                        BackgroundColor="#4C3B8A"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 8"
+                        HeightRequest="40"
+                        Padding="16,0">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="NewButton_Tapped"/>
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
+                        <Image Source="add_icon.png"
+                               HeightRequest="18"
+                               WidthRequest="18"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                        <Label Text="New"
+                               TextColor="White"
+                               FontFamily="InterMedium"
+                               FontSize="14"
+                               VerticalOptions="Center"
+                               Grid.Column="1"/>
+                    </Grid>
+                </Border>
                 
-                <Button Text="Back" 
-                        BackgroundColor="#4C3B8A" 
-                        TextColor="White"
-                        Command="{Binding DirectoryVM.backButtonCommand}"
-                        IsVisible="{Binding DirectoryVM.IsBackButtonVisible}"
-                        HorizontalOptions="End"
-                        Grid.Column="2"
-                        Margin="10,0,0,0"
-                        WidthRequest="120">
-                    <Button.Shadow>
-                        <Shadow Brush="Black" 
-                                Radius="10" 
-                                Opacity="0.5" 
-                                Offset="2,2"/>
-                    </Button.Shadow>
-                </Button>
-            </Grid>
+                <!-- Refresh Button -->
+                <Border BackgroundColor="#4C3B8A"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 8"
+                        HeightRequest="40"
+                        WidthRequest="40">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding DirectoryVM.refreshCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Grid>
+                        <Image Source="refresh_icon.png"
+                               HeightRequest="20"
+                               WidthRequest="20"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                    </Grid>
+                </Border>
+                
+                <!-- Back Button -->
+                <Border BackgroundColor="#4C3B8A"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 8"
+                        HeightRequest="40"
+                        WidthRequest="40"
+                        IsVisible="{Binding DirectoryVM.IsBackButtonVisible}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding DirectoryVM.backButtonCommand}"/>
+                    </Border.GestureRecognizers>
+                    <Grid>
+                        <Image Source="back_icon.png"
+                               HeightRequest="20"
+                               WidthRequest="20"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                    </Grid>
+                </Border>
+            </HorizontalStackLayout>
+        </Grid>
+            
+            <!-- Path Bar with Breadcrumb -->
+            <Border Grid.Row="1"
+                    BackgroundColor="#F8F8FC"
+                    Margin="15,0,15,10"
+                    Padding="12,8"
+                    StrokeShape="RoundRectangle 6"
+                    StrokeThickness="0">
+                <Grid ColumnDefinitions="*, Auto">
+                    <!-- Breadcrumb Path -->
+                    <Label Grid.Column="0"
+                           Text="My Cloud / Documents" 
+                           TextColor="#666677" 
+                           FontSize="13"
+                           VerticalOptions="Center"/>
+                           
+                    <!-- Optional: Text hints for the actions -->
+                    <HorizontalStackLayout Grid.Column="1" Spacing="16">
+                        <Label Text="New Folder" 
+                               TextColor="#4C3B8A" 
+                               FontSize="13" 
+                               FontAttributes="Bold">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding DirectoryVM.createDirectory}"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+                        <Label Text="Upload" 
+                               TextColor="#4C3B8A" 
+                               FontSize="13" 
+                               FontAttributes="Bold">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding FileSelectorVM.AddFilesCommand}"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </HorizontalStackLayout>
+                </Grid>
+            </Border>
             
             <!-- Files List Header -->
             <Grid Grid.Row="2">
@@ -211,32 +279,14 @@
             </Grid>
         </Grid>
 
-        <!-- RIGHT SIDEBAR - Keep this part unchanged -->
+        <!-- RIGHT SIDEBAR -->
         <ScrollView Padding="20" Grid.Column="1">
             <Grid RowDefinitions="Auto, *, Auto">
                 <VerticalStackLayout Grid.Row="0" Spacing="20">
-                    <!-- Add New Files -->
-                    <Frame Padding="20" CornerRadius="10" BackgroundColor="White" Margin="0,17,0,0">
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="Add New Files" 
-                                   FontAttributes="Bold"
-                                   FontSize="16"/>
-                            <Button Text="Upload" 
-                                    BackgroundColor="#4C3B8A" 
-                                    TextColor="White"
-                                    Command="{Binding FileSelectorVM.AddFilesCommand}">
-                                <Button.Shadow>
-                                    <Shadow Brush="Black" 
-                                            Radius="10" 
-                                            Opacity="0.5" 
-                                            Offset="2,2"/>
-                                </Button.Shadow>
-                            </Button>
-                        </VerticalStackLayout>
-                    </Frame>
+                    <!-- Removed the "Add New Files" frame since we moved that functionality to the top bar -->
                 
                     <!-- Upload Queue -->
-                    <Frame Padding="20" CornerRadius="10" BackgroundColor="White">
+                    <Frame Padding="20" CornerRadius="10" BackgroundColor="White" Margin="0,17,0,0">
                         <VerticalStackLayout Spacing="10">
                             <Label Text="Sending Queue" 
                                    FontAttributes="Bold"
