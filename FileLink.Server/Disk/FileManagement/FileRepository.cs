@@ -1,9 +1,7 @@
 using FileLink.Server.Core.Exceptions;
 using FileLink.Server.Services.Logging;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using FileLink.Server.Disk.DirectoryManagement;
-using System.Linq;
 
 namespace FileLink.Server.Disk.FileManagement
 {

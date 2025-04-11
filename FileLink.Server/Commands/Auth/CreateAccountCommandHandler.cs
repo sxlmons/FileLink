@@ -10,12 +10,12 @@ namespace FileLink.Server.Commands.Auth
     // implements the command pattern
     public class CreateAccountCommandHandler : ICommandHandler
     {
-        private readonly AuthenticationService _authService;
+        private readonly IAuthenticationService _authService; // Changed to interface
         private readonly LogService _logService;
         private readonly PacketFactory  _packetFactory = new PacketFactory(); 
         
         // Initializes a new instance of the CreateAccountHandler class
-        public CreateAccountCommandHandler(AuthenticationService authService, LogService logService)
+        public CreateAccountCommandHandler(IAuthenticationService authService, LogService logService) // Changed to interface
         {
             _authService = authService ?? throw new ArgumentNullException(nameof(authService));
             _logService = logService ?? throw new ArgumentNullException(nameof(logService));

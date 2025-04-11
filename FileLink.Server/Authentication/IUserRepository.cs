@@ -13,6 +13,9 @@ namespace FileLink.Server.Authentication
         // Adds a new user
         Task<bool> AddUser(User user);
         
+        // Creates a user (uses add user)
+        Task<User> CreateUser(string username, string password, string email, string role);
+        
         // Updates an existing user
         Task<bool> UpdateUser(User user);
         

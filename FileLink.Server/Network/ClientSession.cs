@@ -1,4 +1,3 @@
-
 using System;
 using System.Net.Sockets;
 using System.Threading;
@@ -13,7 +12,7 @@ namespace FileLink.Server.Network
 {
     // Represents a client connection to the server.
     // Manages the communication with the client and implements the session state machine
-    public class ClientSession : IDisposable
+    public class ClientSession : IClientSession, IDisposable
     {
         private readonly TcpClient _client;
         private readonly NetworkStream _stream;

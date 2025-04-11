@@ -93,18 +93,19 @@ public class FileSelector : INotifyPropertyChanged
             return;
         }
         
-        foreach (var file in Files)
+        // Create a list to track successfully uploaded files
+        List<FilesSelected> successfulUploads = new List<FilesSelected>();
+        
+        foreach (var file in Files.ToList()) // Create a copy of the Files collection for iteration
         {
             try
             {
                 var result = await _fileService.UploadFileAsync(file.fullPath, _directoryMap._currentDirectoryId, userId);
                 if (result != null)
                 {
-                    // This should remove the files as there sent but theres a bug where the click to send only send 1
-                    // it works whenever you send the file those so its low priority 
-                    RemoveFile(file);
+                    // Add to successful uploads list instead of removing immediately
+                    successfulUploads.Add(file);
                     Console.WriteLine($"File uploaded successfully: {file.fileName}");
-                    await _directoryMap.LoadCurrentDirectory();
                 }
                 else
                 {
@@ -115,6 +116,18 @@ public class FileSelector : INotifyPropertyChanged
             {
                 Console.WriteLine($"Error Sending File: {ex.Message}");
             }
+        }
+        
+        // Remove all successfully uploaded files after the loop
+        foreach (var file in successfulUploads)
+        {
+            RemoveFile(file);
+        }
+        
+        // Reload directory contents once after all uploads
+        if (successfulUploads.Count > 0)
+        {
+            await _directoryMap.LoadCurrentDirectory();
         }
     }
     
