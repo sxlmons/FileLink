@@ -76,13 +76,13 @@ namespace FileLink.Server.Commands.File
 
                 if (success)
                 {
-                    _logService.Info($"Failed to move files to target directory: {moveInfo.TargetDirectoryId}");
+                    _logService.Info($"Files moved: {moveInfo.FileIds.Count} files to directory {moveInfo.TargetDirectoryId ?? "root"} for user {session.UserId}");
                     return _packetFactory.CreateFileMoveResponse(true, moveInfo.FileIds.Count, moveInfo.TargetDirectoryId, "Files moved successfully.", session.UserId);
                 }
                 else
                 {
-                    _logService.Info($"Files moved: {moveInfo.FileIds.Count} files to directory {moveInfo.TargetDirectoryId ?? "root"} for user {session.UserId}");
-                    return _packetFactory.CreateFileMoveResponse(false, moveInfo.FileIds.Count, moveInfo.TargetDirectoryId, "Files moved successfully.", session.UserId);
+                    _logService.Warning($"Failed to move files to target directory: {moveInfo.TargetDirectoryId}");
+                    return _packetFactory.CreateFileMoveResponse(false, moveInfo.FileIds.Count, moveInfo.TargetDirectoryId, "Failed to move files to the target directory.", session.UserId);
                 }
                 
             }
