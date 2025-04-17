@@ -37,6 +37,7 @@ namespace FileLink.Server.Commands
             RegisterHandler(new LoginCommandHandler(_authService, _logService));
             RegisterHandler(new LogoutCommandHandler(_authService, _logService));
             RegisterHandler(new CreateAccountCommandHandler(_authService, _logService));
+            RegisterHandler(new UpdateUserNamesCommandHandler(_authService, _logService));
             
             // File operation handlers
             RegisterHandler(new FileListCommandHandler(_fileService, _logService));

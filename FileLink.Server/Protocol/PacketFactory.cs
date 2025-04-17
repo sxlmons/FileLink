@@ -872,5 +872,46 @@ public class PacketFactory
 
         return packet;
     }
+    
+    // [CLIENT] Create an update user names request packet
+    public Packet CreateUpdateUserNamesRequest(string userId, string firstName, string lastName)
+    {
+        var userInfo = new 
+        { 
+            FirstName = firstName, 
+            LastName = lastName 
+        };
+        
+        var payload = JsonSerializer.SerializeToUtf8Bytes(userInfo);
+
+        return new Packet
+        {
+            CommandCode = Commands.CommandCode.UPDATE_USER_NAMES_REQUEST,
+            UserId = userId,
+            Payload = payload
+        };
+    }
+
+    // [SERVER] Create an update user names response packet
+    public Packet CreateUpdateUserNamesResponse(bool success, string message)
+    {
+        var response = new 
+        { 
+            Success = success, 
+            Message = message
+        };
+            
+        var payload = JsonSerializer.SerializeToUtf8Bytes(response);
+
+        var packet = new Packet
+        {
+            CommandCode = Commands.CommandCode.UPDATE_USER_NAMES_RESPONSE,
+            Payload = payload
+        };
+
+        packet.Metadata["Success"] = success.ToString();
+            
+        return packet;
+    }
 }
     

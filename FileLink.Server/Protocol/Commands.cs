@@ -13,6 +13,8 @@ public static class Commands
         public const int LOGOUT_RESPONSE = 103;
         public const int CREATE_ACCOUNT_REQUEST = 110;
         public const int CREATE_ACCOUNT_RESPONSE = 111;
+        public const int UPDATE_USER_NAMES_REQUEST = 120;
+        public const int UPDATE_USER_NAMES_RESPONSE = 121;
 
         // File Commands (200-299)
         // File list commands 
@@ -69,6 +71,8 @@ public static class Commands
                 LOGOUT_RESPONSE => "LOGOUT_RESPONSE",
                 CREATE_ACCOUNT_REQUEST => "CREATE_ACCOUNT_REQUEST",
                 CREATE_ACCOUNT_RESPONSE => "CREATE_ACCOUNT_RESPONSE",
+                UPDATE_USER_NAMES_REQUEST => "UPDATE_USER_NAMES_REQUEST",
+                UPDATE_USER_NAMES_RESPONSE => "UPDATE_USER_NAMES_RESPONSE",
                 FILE_LIST_REQUEST => "FILE_LIST_REQUEST",
                 FILE_LIST_RESPONSE => "FILE_LIST_RESPONSE",
                 FILE_UPLOAD_INIT_REQUEST => "FILE_UPLOAD_INIT_REQUEST",
@@ -112,6 +116,7 @@ public static class Commands
                 LOGIN_REQUEST => LOGIN_RESPONSE,
                 LOGOUT_REQUEST => LOGOUT_RESPONSE,
                 CREATE_ACCOUNT_REQUEST => CREATE_ACCOUNT_RESPONSE,
+                UPDATE_USER_NAMES_REQUEST => UPDATE_USER_NAMES_RESPONSE,
                 FILE_LIST_REQUEST => FILE_LIST_RESPONSE,
                 FILE_UPLOAD_INIT_REQUEST => FILE_UPLOAD_INIT_RESPONSE,
                 FILE_UPLOAD_CHUNK_REQUEST => FILE_UPLOAD_CHUNK_RESPONSE,

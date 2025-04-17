@@ -12,6 +12,8 @@ public class User
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
     
     // Initializes a new instance of the User class
     public User()

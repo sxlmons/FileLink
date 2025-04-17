@@ -10,5 +10,6 @@ namespace FileLink.Server.Authentication
         Task<User> GetUserById(string userId);
         Task<User> GetUserByUsername(string username);
         Task<bool> UpdateUser(User user);
+        Task<bool> UpdateUserNames(string userId, string firstName, string lastName);
     }
 }

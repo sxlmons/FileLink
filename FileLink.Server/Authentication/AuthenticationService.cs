@@ -152,5 +152,46 @@ namespace FileLink.Server.Authentication
         {
             return _userRepository.UpdateUser(user);
         }
+        
+        // Updates a user's first and last name
+        public async Task<bool> UpdateUserNames(string userId, string firstName, string lastName)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(userId))
+                {
+                    _logService.Warning("Update names attempt with empty user ID");
+                    return false;
+                }
+                
+                var user = await _userRepository.GetUserById(userId);
+                if (user == null)
+                {
+                    _logService.Warning($"Update names failed. User not found: {userId}");
+                    return false;
+                }
+                
+                user.FirstName = firstName;
+                user.LastName = lastName;
+                user.UpdatedAt = DateTime.UtcNow;
+                
+                var result = await _userRepository.UpdateUser(user);
+                if (result)
+                {
+                    _logService.Info($"Names updated for user: {user.Username} (ID: {user.Id}, Names: {firstName} {lastName})");
+                }
+                else
+                {
+                    _logService.Warning($"Failed to update names for user: {user.Username} (ID: {user.Id})");
+                }
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logService.Error($"Error updating user names: {ex.Message}", ex);
+                throw new AuthenticationException("Failed to update user names.", ex);
+            }
+        }
     }
 }
